@@ -1,40 +1,40 @@
 import 'package:flutter/material.dart';
 import '../../../core/widgets/custom_bottom_nav.dart';
+import '../../../core/providers/root_tab_provider.dart';
 import 'home_screen.dart';
+import 'explore_screen.dart';
+import '../../exhibition/screens/enquiry_screen.dart';
 
-class RootScreen extends StatefulWidget {
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../../core/providers/auth_provider.dart';
+
+class RootScreen extends ConsumerWidget {
   const RootScreen({Key? key}) : super(key: key);
 
   @override
-  State<RootScreen> createState() => _RootScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isAuthenticated = ref.watch(authProvider).isAuthenticated;
+    final currentIndex = ref.watch(rootTabIndexProvider);
 
-class _RootScreenState extends State<RootScreen> {
-  int _currentIndex = 0;
+    final List<Widget> activeScreens = [
+      const HomeScreen(),
+      const ExploreScreen(),
+      const EnquiryScreen(),
+      if (isAuthenticated) const Scaffold(body: Center(child: Text('Saved Properties Placeholder'))),
+      if (isAuthenticated) const Scaffold(body: Center(child: Text('Profile Placeholder'))),
+    ];
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const Scaffold(body: Center(child: Text('Explore Screen Placeholder'))),
-    const Scaffold(body: Center(child: Text('Saved Properties Placeholder'))),
-    const Scaffold(body: Center(child: Text('Profile Placeholder'))),
-  ];
+    final safeIndex = currentIndex >= activeScreens.length ? 0 : currentIndex;
 
-  void _onTabTapped(int index) {
-    setState(() {
-      _currentIndex = index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
+        index: safeIndex,
+        children: activeScreens,
       ),
       bottomNavigationBar: CustomBottomNavBar(
-        currentIndex: _currentIndex,
-        onTap: _onTabTapped,
+        currentIndex: safeIndex,
+        isAuthenticated: isAuthenticated,
+        onTap: (index) => ref.read(rootTabIndexProvider.notifier).state = index,
       ),
     );
   }

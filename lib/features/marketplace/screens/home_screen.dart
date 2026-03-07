@@ -1,67 +1,149 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/models/property_model.dart';
+import '../../../core/providers/property_provider.dart';
+import '../../../core/providers/root_tab_provider.dart';
 import '../widgets/property_card.dart';
 import '../widgets/category_selector.dart';
+import '../widgets/sponsor_carousel_widget.dart';
+import '../screens/marketplace_screen.dart';
 import '../../property/screens/property_detail_screen.dart';
+import '../../auth/screens/auth_screen.dart';
+import '../../exhibition/widgets/exhibition_info_section.dart';
 
-class HomeScreen extends StatefulWidget {
+import '../../../core/providers/auth_provider.dart';
+
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
-  final List<PropertyModel> allProperties = PropertyModel.generateMockData;
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   final List<String> categories = [
+    'All',
     'House',
     'Apartment',
     'Villa',
     'Condo',
-    'Land'
+    'Land',
   ];
 
-  String selectedCategory = 'House';
+  String selectedCategory = 'All';
+  final ScrollController _scrollController = ScrollController();
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(propertyProvider.notifier).loadInitial(category: selectedCategory));
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
+      ref.read(propertyProvider.notifier).loadMore();
+    }
+  }
+
+  void _performSearch(String query) {
+    ref.read(propertyProvider.notifier).loadInitial(
+      searchTerm: query.isEmpty ? null : query,
+      category: selectedCategory,
+    );
+  }
+
+  void _goToExploreTab() {
+    ref.read(rootTabIndexProvider.notifier).state = 1;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final featuredProperties =
-        allProperties.where((p) => p.isFeatured).toList();
-    final recommendedProperties =
-        allProperties.where((p) => !p.isFeatured).toList();
+    final propertyState = ref.watch(propertyProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
-      // We use a custom scrolling body instead of AppBar to get that modern app feel
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 24),
-              _buildSearchBar(context),
-              const SizedBox(height: 24),
-              CategorySelector(
-                categories: categories,
-                onCategorySelected: (category) {
-                  setState(() {
-                    selectedCategory = category;
-                  });
-                },
-              ),
-              const SizedBox(height: 24),
-              _buildSectionHeader('Featured Properties', onSeeAll: () {}),
-              const SizedBox(height: 16),
-              _buildFeaturedList(context, featuredProperties),
-              const SizedBox(height: 24),
-              _buildSectionHeader('Recommended', onSeeAll: () {}),
-              const SizedBox(height: 16),
-              _buildRecommendedList(context, recommendedProperties),
-              const SizedBox(height: 24), // Bottom padding
-            ],
+        child: RefreshIndicator(
+          onRefresh: () => ref.read(propertyProvider.notifier).loadInitial(
+            searchTerm: _searchController.text.trim().isEmpty ? null : _searchController.text,
+            category: selectedCategory,
+          ),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(context),
+                const SponsorCarouselWidget(height: 220, autoplaySeconds: 5),
+                const SizedBox(height: 24),
+                const ExhibitionInfoSection(),
+                const SizedBox(height: 24),
+                CategorySelector(
+                  categories: categories,
+                  onCategorySelected: (category) {
+                    setState(() {
+                      selectedCategory = category;
+                    });
+                    ref.read(propertyProvider.notifier).loadInitial(
+                      searchTerm: _searchController.text.trim().isEmpty ? null : _searchController.text,
+                      category: category,
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                _buildSearchBar(context),
+                const SizedBox(height: 24),
+                if (propertyState.error != null)
+                   Padding(
+                     padding: const EdgeInsets.all(16.0),
+                     child: Text(
+                       'Error: ${propertyState.error}',
+                       style: const TextStyle(color: Colors.red),
+                     ),
+                   ),
+
+                if (propertyState.isLoading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(40.0),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else ...[
+                  _buildSectionHeader(
+                    _searchController.text.isNotEmpty ? 'Search Results' : 'Featured Properties',
+                    onSeeAll: _goToExploreTab,
+                  ),
+                  const SizedBox(height: 16),
+                  if (propertyState.properties.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(32.0),
+                      child: Center(child: Text('No properties found')),
+                    )
+                  else
+                    _buildPropertyList(
+                      context,
+                      propertyState.properties,
+                      propertyState.isFetchingMore,
+                      propertyState.hasMore,
+                      () => ref.read(propertyProvider.notifier).loadMore(),
+                    ),
+                ],
+                const SizedBox(height: 24), // Bottom padding
+              ],
+            ),
           ),
         ),
       ),
@@ -74,41 +156,62 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Location',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                children: [
-                  const Icon(LucideIcons.mapPin,
-                      size: 16, color: AppTheme.primaryColor),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Addis Ababa, ET',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const Icon(LucideIcons.chevronDown, size: 20),
-                ],
-              ),
-            ],
-          ),
-          Container(
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(color: AppTheme.borderColor, width: 2),
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const MarketplaceScreen(),
+                ),
+              );
+            },
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Marketplace',
+                  style: Theme.of(context).textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(LucideIcons.store,
+                        size: 16, color: AppTheme.primaryColor),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Browse by category',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const Icon(LucideIcons.chevronRight, size: 20),
+                  ],
+                ),
+              ],
             ),
-            child: const CircleAvatar(
-              radius: 20,
-              backgroundImage: NetworkImage(
-                  'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
-            ),
           ),
+          if (ref.watch(authProvider).isAuthenticated)
+            Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppTheme.borderColor, width: 2),
+              ),
+              child: const CircleAvatar(
+                radius: 20,
+                backgroundImage: NetworkImage(
+                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
+              ),
+            )
+          else
+            IconButton(
+              icon: const Icon(LucideIcons.userCircle, size: 32, color: AppTheme.primaryColor),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const AuthScreen()),
+                );
+              },
+            ),
         ],
       ),
     );
@@ -123,16 +226,9 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Container(
               height: 52,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: AppTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppTheme.borderColor),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
-                    blurRadius: 10,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
               ),
               child: Row(
                 children: [
@@ -141,9 +237,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: TextField(
-                      decoration: InputDecoration(
+                      controller: _searchController,
+                      onSubmitted: _performSearch,
+                      textInputAction: TextInputAction.search,
+                      style: const TextStyle(color: AppTheme.textPrimary),
+                      decoration: const InputDecoration(
                         hintText: 'Search for properties...',
-                        hintStyle: Theme.of(context).textTheme.bodyMedium,
+                        hintStyle: TextStyle(color: AppTheme.textSecondary),
                         border: InputBorder.none,
                       ),
                     ),
@@ -159,17 +259,9 @@ class _HomeScreenState extends State<HomeScreen> {
             decoration: BoxDecoration(
               color: AppTheme.primaryColor,
               borderRadius: BorderRadius.circular(16),
-              boxShadow: [
-                BoxShadow(
-                  color: AppTheme.primaryColor.withOpacity(0.3),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
             ),
             child: IconButton(
-              icon: const Icon(LucideIcons.slidersHorizontal,
-                  color: Colors.white),
+              icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.black),
               onPressed: () {
                 // Show filter bottom sheet
               },
@@ -210,37 +302,43 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildFeaturedList(
-      BuildContext context, List<PropertyModel> properties) {
-    return SizedBox(
-      height: 310, // Must fit the horizontal card height (image + content)
-      child: ListView.builder(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        scrollDirection: Axis.horizontal,
-        itemCount: properties.length,
-        itemBuilder: (context, index) {
-          return PropertyCard(
-            property: properties[index],
-            isHorizontal: true,
-            onTap: () => _navigateToDetail(context, properties[index]),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildRecommendedList(
-      BuildContext context, List<PropertyModel> properties) {
+  Widget _buildPropertyList(
+      BuildContext context,
+      List<PropertyModel> properties,
+      bool isFetchingMore,
+      bool hasMore,
+      VoidCallback onLoadMore) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: Column(
-        children: properties
-            .map((prop) => PropertyCard(
-                  property: prop,
-                  isHorizontal: false,
-                  onTap: () => _navigateToDetail(context, prop),
-                ))
-            .toList(),
+        children: [
+          ...properties.map((prop) => PropertyCard(
+                property: prop,
+                isHorizontal: false,
+                onTap: () => _navigateToDetail(context, prop),
+              )),
+          if (isFetchingMore)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 24.0),
+              child: Center(child: CircularProgressIndicator()),
+            )
+          else if (hasMore && properties.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: SizedBox(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: onLoadMore,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: AppTheme.primaryColor,
+                    side: const BorderSide(color: AppTheme.primaryColor),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  child: const Text('Load more'),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

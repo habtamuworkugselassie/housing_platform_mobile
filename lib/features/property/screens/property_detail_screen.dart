@@ -1,7 +1,13 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/models/property_model.dart';
+import '../../../core/widgets/property_image.dart';
 
 class PropertyDetailScreen extends StatelessWidget {
   final PropertyModel property;
@@ -50,11 +56,12 @@ class PropertyDetailScreen extends StatelessWidget {
         padding: const EdgeInsets.all(8.0),
         child: Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppTheme.surfaceColor,
             shape: BoxShape.circle,
+            border: Border.all(color: AppTheme.borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.1),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 4,
               ),
             ],
@@ -71,11 +78,12 @@ class PropertyDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.surfaceColor,
               shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 4,
                 ),
               ],
@@ -91,11 +99,12 @@ class PropertyDetailScreen extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           child: Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: AppTheme.surfaceColor,
               shape: BoxShape.circle,
+              border: Border.all(color: AppTheme.borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withValues(alpha: 0.3),
                   blurRadius: 4,
                 ),
               ],
@@ -119,8 +128,11 @@ class PropertyDetailScreen extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.network(
-            property.imageUrl,
+          PropertyImage(
+            imageUrl: property.imageUrl,
+            propertyType: property.type,
+            height: 350,
+            width: double.infinity,
             fit: BoxFit.cover,
           ),
           // Gradient Overlay to ensure back button visibility
@@ -130,10 +142,10 @@ class PropertyDetailScreen extends StatelessWidget {
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
                 colors: [
-                  Colors.black.withOpacity(0.4),
+                  Colors.black.withValues(alpha: 0.4),
                   Colors.transparent,
-                  Colors.black.withOpacity(0.1),
-                  Colors.white.withOpacity(0.9), // Blend into content body
+                  Colors.transparent,
+                  AppTheme.scaffoldBackgroundColor,
                 ],
                 stops: const [0.0, 0.3, 0.8, 1.0],
               ),
@@ -151,7 +163,7 @@ class PropertyDetailScreen extends StatelessWidget {
               child: Text(
                 property.type,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.white,
+                      color: Colors.black,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -221,6 +233,15 @@ class PropertyDetailScreen extends StatelessWidget {
                     height: 1.5,
                   ),
             ),
+            if (property.latitude != null && property.longitude != null) ...[
+              const SizedBox(height: 24),
+              Text(
+                'Location',
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              const SizedBox(height: 12),
+              _buildMapSection(context),
+            ],
             const SizedBox(height: 24),
             Text(
               'Listing Agent',
@@ -234,37 +255,122 @@ class PropertyDetailScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _openInMapsForRouting(double lat, double lng) async {
+    final String url = Platform.isIOS
+        ? 'http://maps.apple.com/?daddr=$lat,$lng'
+        : 'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng';
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
+  Widget _buildMapSection(BuildContext context) {
+    final lat = property.latitude!;
+    final lng = property.longitude!;
+    final center = LatLng(lat, lng);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: 220,
+            width: double.infinity,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCenter: center,
+                initialZoom: 15,
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'com.housingplatform.mobile',
+                  subdomains: const ['a', 'b', 'c'],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: center,
+                      width: 40,
+                      height: 40,
+                      child: const Icon(
+                        LucideIcons.mapPin,
+                        color: AppTheme.primaryColor,
+                        size: 40,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        SizedBox(
+          height: 44,
+          child: OutlinedButton.icon(
+            onPressed: () => _openInMapsForRouting(lat, lng),
+            icon: const Icon(LucideIcons.navigation, size: 20, color: AppTheme.primaryColor),
+            label: const Text('Navigate'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppTheme.primaryColor,
+              side: const BorderSide(color: AppTheme.primaryColor),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildSpecsRow(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        _buildSpecItem(
-            context, LucideIcons.bed, '${property.bedrooms} Bedrooms'),
-        _buildSpecItem(
-            context, LucideIcons.bath, '${property.bathrooms} Bathrooms'),
-        _buildSpecItem(context, LucideIcons.maximize, '${property.area} Sqft'),
+        Expanded(
+          child: _buildSpecItem(
+              context, LucideIcons.bed, '${property.bedrooms} Beds'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildSpecItem(
+              context, LucideIcons.bath, '${property.bathrooms} Baths'),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildSpecItem(
+              context, LucideIcons.maximize, '${property.area} Sqft'),
+        ),
       ],
     );
   }
 
   Widget _buildSpecItem(BuildContext context, IconData icon, String label) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: AppTheme.borderColor),
       ),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(icon, size: 18, color: AppTheme.primaryColor),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.textPrimary,
-                ),
+          Icon(icon, size: 16, color: AppTheme.primaryColor),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: AppTheme.textPrimary,
+                    fontSize: 12,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
         ],
       ),
@@ -275,15 +381,15 @@ class PropertyDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: AppTheme.borderColor),
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 28,
-            backgroundImage: NetworkImage(property.agent.imageUrl),
+          AgentAvatarImage(
+            imageUrl: property.agent.imageUrl,
+            size: 56,
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -295,9 +401,41 @@ class PropertyDetailScreen extends StatelessWidget {
                   style: Theme.of(context).textTheme.titleMedium,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  property.agent.organization,
-                  style: Theme.of(context).textTheme.bodyMedium,
+                Row(
+                  children: [
+                    Flexible(
+                      child: Text(
+                        property.agent.organization,
+                        style: Theme.of(context).textTheme.bodyMedium,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (property.showVerificationBadge && property.verificationBadgeLabel != null) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: AppTheme.verifiedBadgeBlue.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(color: AppTheme.verifiedBadgeBlue.withValues(alpha: 0.5)),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.badgeCheck, size: 12, color: AppTheme.verifiedBadgeBlue),
+                            const SizedBox(width: 4),
+                            Text(
+                              property.verificationBadgeLabel!,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: AppTheme.verifiedBadgeBlue,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
@@ -305,7 +443,7 @@ class PropertyDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withOpacity(0.1),
+              color: AppTheme.primaryColor.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.messageCircle,
@@ -315,7 +453,7 @@ class PropertyDetailScreen extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppTheme.success.withOpacity(0.1),
+              color: AppTheme.success.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: const Icon(LucideIcons.phoneCall,
@@ -330,10 +468,11 @@ class PropertyDetailScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppTheme.surfaceColor,
+        border: Border(top: BorderSide(color: AppTheme.borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -347,6 +486,10 @@ class PropertyDetailScreen extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () {},
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppTheme.primaryColor,
+                  side: const BorderSide(color: AppTheme.primaryColor),
+                ),
                 child: const Text('Contact Agent'),
               ),
             ),
@@ -354,6 +497,10 @@ class PropertyDetailScreen extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {},
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.primaryColor,
+                  foregroundColor: Colors.black,
+                ),
                 child: const Text('Book a Tour'),
               ),
             ),

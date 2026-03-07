@@ -4,11 +4,13 @@ import '../theme/theme.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   final int currentIndex;
+  final bool isAuthenticated;
   final Function(int) onTap;
 
   const CustomBottomNavBar({
     Key? key,
     required this.currentIndex,
+    required this.isAuthenticated,
     required this.onTap,
   }) : super(key: key);
 
@@ -17,9 +19,10 @@ class CustomBottomNavBar extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
+        border: Border(top: BorderSide(color: AppTheme.borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.3),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -41,8 +44,8 @@ class CustomBottomNavBar extends StatelessWidget {
             showUnselectedLabels: true,
             selectedFontSize: 12,
             unselectedFontSize: 12,
-            items: const [
-              BottomNavigationBarItem(
+            items: [
+              const BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(bottom: 4),
                   child: Icon(LucideIcons.home),
@@ -53,7 +56,7 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
                 label: 'Home',
               ),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(bottom: 4),
                   child: Icon(LucideIcons.search),
@@ -64,28 +67,41 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
                 label: 'Explore',
               ),
-              BottomNavigationBarItem(
+              const BottomNavigationBarItem(
                 icon: Padding(
                   padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(LucideIcons.heart),
+                  child: Icon(LucideIcons.messageCircle),
                 ),
                 activeIcon: Padding(
                   padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(LucideIcons.heart),
+                  child: Icon(LucideIcons.messageCircle),
                 ),
-                label: 'Saved',
+                label: 'Enquiry',
               ),
-              BottomNavigationBarItem(
-                icon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(LucideIcons.user),
+              if (isAuthenticated)
+                const BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(LucideIcons.heart),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(LucideIcons.heart),
+                  ),
+                  label: 'Saved',
                 ),
-                activeIcon: Padding(
-                  padding: EdgeInsets.only(bottom: 4),
-                  child: Icon(LucideIcons.user),
+              if (isAuthenticated)
+                const BottomNavigationBarItem(
+                  icon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(LucideIcons.user),
+                  ),
+                  activeIcon: Padding(
+                    padding: EdgeInsets.only(bottom: 4),
+                    child: Icon(LucideIcons.user),
+                  ),
+                  label: 'Profile',
                 ),
-                label: 'Profile',
-              ),
             ],
           ),
         ),

@@ -1,21 +1,27 @@
 import 'package:flutter/material.dart';
 import 'core/theme/theme.dart';
-import 'features/marketplace/screens/root_screen.dart';
+import 'features/splash/screens/splash_screen.dart';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 void main() {
-  runApp(const HousingPlatformMobileApp());
+  runApp(
+    const ProviderScope(
+      child: HousingPlatformMobileApp(),
+    ),
+  );
 }
 
-class HousingPlatformMobileApp extends StatelessWidget {
+class HousingPlatformMobileApp extends ConsumerWidget {
   const HousingPlatformMobileApp({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return MaterialApp(
-      title: 'Habte Real Estate',
+      title: 'Real Estate',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
-      home: const RootScreen(),
+      home: const SplashScreen(),
     );
   }
 }

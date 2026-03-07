@@ -39,7 +39,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               margin: const EdgeInsets.only(right: 12),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
               decoration: BoxDecoration(
-                color: isSelected ? AppTheme.primaryColor : Colors.white,
+                color: isSelected ? AppTheme.primaryColor : AppTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color:
@@ -49,7 +49,7 @@ class _CategorySelectorState extends State<CategorySelector> {
                 boxShadow: isSelected
                     ? [
                         BoxShadow(
-                          color: AppTheme.primaryColor.withOpacity(0.3),
+                          color: AppTheme.primaryColor.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 4),
                         )
@@ -60,7 +60,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               child: Text(
                 widget.categories[index],
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.white : AppTheme.textPrimary,
+                      color: isSelected ? Colors.black : AppTheme.textPrimary,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),

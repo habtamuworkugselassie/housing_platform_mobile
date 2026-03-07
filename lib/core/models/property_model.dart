@@ -1,133 +1,182 @@
+import '../network/api_config.dart';
+
+class PropertyMediaModel {
+  final String id;
+  final String type; // IMAGE, VIDEO
+  final String? url;
+  final String? caption;
+  final int index;
+  final bool isPrimary;
+
+  PropertyMediaModel({
+    required this.id,
+    required this.type,
+    this.url,
+    this.caption,
+    required this.index,
+    required this.isPrimary,
+  });
+
+  factory PropertyMediaModel.fromJson(Map<String, dynamic> json) {
+    return PropertyMediaModel(
+      id: json['id']?.toString() ?? '',
+      type: json['type'] as String? ?? 'IMAGE',
+      url: json['url'] as String?,
+      caption: json['caption'] as String?,
+      index: (json['index'] as num?)?.toInt() ?? 0,
+      isPrimary: json['isPrimary'] as bool? ?? false,
+    );
+  }
+}
+
+class AgentModel {
+  final String name;
+  final String organization;
+  final String imageUrl;
+  final String phone;
+
+  // Since Backend PropertyResponse exposes realEstateCompanyName and agent details flat, we create a nested model mapped here
+  // We'll hydrate this from the flat PropertyResponse fields
+  const AgentModel({
+    required this.name,
+    required this.organization,
+    required this.imageUrl,
+    required this.phone,
+  });
+}
+
 class PropertyModel {
   final String id;
   final String title;
   final String description;
-  final double price;
-  final String location;
-  final String imageUrl;
+  final String type; // RESIDENTIAL, COMMERCIAL, etc
+  final String status; // AVAILABLE, SOLD
+  final double priceETB;
+  final double priceUSD;
+  final String address;
+  final String city;
+  final String state;
+  final String country;
+  final String zipCode;
+  final double? latitude;
+  final double? longitude;
   final int bedrooms;
   final int bathrooms;
-  final double area; // in sqft or sqm
-  final String type; // e.g., 'House', 'Apartment'
-  final bool isFeatured;
+  final double area;
+  final bool isSponsored;
+  final String? realEstateCompanyId;
+  final String? realEstateCompanyName;
+  final String? realEstateCompanyPhone;
+  final bool realEstateCompanyVerified;
+  /// Verification level from backend: NONE, HALF, FULL. HALF = e.g. docs submitted but numbers missing.
+  final String? realEstateCompanyVerificationLevel;
+  final List<PropertyMediaModel> images;
+  
+  // Custom composite properties
   final AgentModel agent;
+  final bool isFeatured;
 
   PropertyModel({
     required this.id,
     required this.title,
     required this.description,
-    required this.price,
-    required this.location,
-    required this.imageUrl,
+    required this.type,
+    required this.status,
+    required this.priceETB,
+    required this.priceUSD,
+    required this.address,
+    required this.city,
+    required this.state,
+    required this.country,
+    required this.zipCode,
+    this.latitude,
+    this.longitude,
     required this.bedrooms,
     required this.bathrooms,
     required this.area,
-    required this.type,
-    this.isFeatured = false,
+    required this.isSponsored,
+    this.realEstateCompanyId,
+    this.realEstateCompanyName,
+    this.realEstateCompanyPhone,
+    this.realEstateCompanyVerified = false,
+    this.realEstateCompanyVerificationLevel,
+    required this.images,
     required this.agent,
+    this.isFeatured = false,
   });
 
-  // Mock Data factory
-  static List<PropertyModel> get generateMockData {
-    return [
-      PropertyModel(
-        id: '1',
-        title: 'Modern Luxury Villa',
-        description:
-            'A beautiful modern villa with an infinity pool and stunning views of the surrounding mountains. Features a spacious open floor plan, high-end appliances, and beautifully landscaped gardens.',
-        price: 2500000.0,
-        location: 'Beverly Hills, CA',
-        imageUrl:
-            'https://images.unsplash.com/photo-1613977257363-707ba9348227?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        bedrooms: 4,
-        bathrooms: 5,
-        area: 4500.0,
-        type: 'Villa',
-        isFeatured: true,
-        agent: AgentModel.mockAgent1,
-      ),
-      PropertyModel(
-        id: '2',
-        title: 'Downtown Skyline Penthouse',
-        description:
-            'Experience luxury living in the heart of the city. This penthouse offers panoramic skyline views, floor-to-ceiling windows, and access to premium building amenities including a gym and rooftop lounge.',
-        price: 1850000.0,
-        location: 'Downtown Core, NY',
-        imageUrl:
-            'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        bedrooms: 3,
-        bathrooms: 3,
-        area: 2100.0,
-        type: 'Apartment',
-        isFeatured: true,
-        agent: AgentModel.mockAgent2,
-      ),
-      PropertyModel(
-        id: '3',
-        title: 'Cozy Suburban Family Home',
-        description:
-            'Perfect family home located in a quiet, tree-lined neighborhood. Features a large backyard, updated kitchen, and proximity to top-rated schools.',
-        price: 850000.0,
-        location: 'Oakridge Suburbs, TX',
-        imageUrl:
-            'https://images.unsplash.com/photo-1583608205776-bfd35f0d9f83?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        bedrooms: 3,
-        bathrooms: 2,
-        area: 1800.0,
-        type: 'House',
-        isFeatured: false,
-        agent: AgentModel.mockAgent1,
-      ),
-      PropertyModel(
-        id: '4',
-        title: 'Minimalist Studio Loft',
-        description:
-            'Chic, industrial-style studio loft in the arts district. Exposed brick walls, high ceilings, and an open layout make this a perfect creative space.',
-        price: 450000.0,
-        location: 'Arts District, NY',
-        imageUrl:
-            'https://images.unsplash.com/photo-1554995207-c18c203602cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80',
-        bedrooms: 1,
-        bathrooms: 1,
-        area: 950.0,
-        type: 'Apartment',
-        isFeatured: false,
-        agent: AgentModel.mockAgent2,
-      ),
-    ];
+  factory PropertyModel.fromJson(Map<String, dynamic> json) {
+    var imagesList = (json['images'] as List<dynamic>?)
+            ?.map((e) => PropertyMediaModel.fromJson(e as Map<String, dynamic>))
+            .toList() ??
+        [];
+
+    final companyName = json['realEstateCompanyName'] as String? ?? 'Independent Agent';
+    final companyPhone = json['realEstateCompanyPhone'] as String? ?? '+251 900 000000';
+    // Mocks missing backend direct agent exposure using company info
+    final agent = AgentModel(
+        name: companyName, // Mocking agent as company until agent projection expands
+        organization: companyName,
+        phone: companyPhone,
+        imageUrl: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&q=80',
+    );
+
+    return PropertyModel(
+      id: json['id']?.toString() ?? '',
+      title: json['title'] as String? ?? 'Untitled Property',
+      description: json['description'] as String? ?? '',
+      type: json['type'] as String? ?? 'RESIDENTIAL',
+      status: json['status'] as String? ?? 'AVAILABLE',
+      priceETB: (json['priceETB'] as num?)?.toDouble() ?? 0.0,
+      priceUSD: (json['priceUSD'] as num?)?.toDouble() ?? 0.0,
+      address: json['address'] as String? ?? '',
+      city: json['city'] as String? ?? '',
+      state: json['state'] as String? ?? '',
+      country: json['country'] as String? ?? 'Ethiopia',
+      zipCode: json['zipCode'] as String? ?? '',
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
+      bedrooms: (json['bedrooms'] as num?)?.toInt() ?? 0,
+      bathrooms: (json['bathrooms'] as num?)?.toInt() ?? 0,
+      area: (json['area'] as num?)?.toDouble() ?? 0.0,
+      isSponsored: json['isSponsored'] as bool? ?? false,
+      realEstateCompanyId: json['realEstateCompanyId']?.toString(),
+      realEstateCompanyName: companyName,
+      realEstateCompanyPhone: companyPhone,
+      realEstateCompanyVerified: json['realEstateCompanyVerified'] as bool? ?? false,
+      realEstateCompanyVerificationLevel: json['realEstateCompanyVerificationLevel'] as String?,
+      images: imagesList,
+      agent: agent,
+      isFeatured: json['isSponsored'] as bool? ?? false, // using isSponsored for featured highlight
+    );
   }
-}
 
-class AgentModel {
-  final String id;
-  final String name;
-  final String imageUrl;
-  final String organization;
-  final String phone;
+  // Display price getter
+  double get price => priceETB > 0 ? priceETB : priceUSD;
 
-  AgentModel({
-    required this.id,
-    required this.name,
-    required this.imageUrl,
-    required this.organization,
-    required this.phone,
-  });
+  /// True if we should show a verification badge (FULL or HALF).
+  bool get showVerificationBadge =>
+      realEstateCompanyVerificationLevel == 'FULL' ||
+      realEstateCompanyVerificationLevel == 'HALF' ||
+      realEstateCompanyVerified;
 
-  static AgentModel get mockAgent1 => AgentModel(
-        id: 'a1',
-        name: 'Sarah Jenkins',
-        imageUrl:
-            'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        organization: 'Habte Real Estate',
-        phone: '+1 (555) 123-4567',
-      );
+  /// Label for badge: Verified (FULL) or Half verified (HALF).
+  String? get verificationBadgeLabel {
+    final level = realEstateCompanyVerificationLevel;
+    if (level == 'FULL' || realEstateCompanyVerified) return 'Verified';
+    if (level == 'HALF') return 'Half verified';
+    return null;
+  }
+  
+  // Display location
+  String get location => '$city, $state $country'.trim().replaceAll(',  ', ', ');
 
-  static AgentModel get mockAgent2 => AgentModel(
-        id: 'a2',
-        name: 'Michael Chen',
-        imageUrl:
-            'https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-4.0.3&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-        organization: 'Habte Real Estate',
-        phone: '+1 (555) 987-6543',
-      );
+  // Get primary image (uses same backend origin as API so release builds hit Droplet).
+  String get imageUrl {
+    if (images.isEmpty) {
+      return 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80';
+    }
+    final primary = images.firstWhere((img) => img.isPrimary, orElse: () => images.first);
+    return '${ApiConfig.baseOrigin}/api/v1/properties/$id/images/${primary.id}/file';
+  }
 }
