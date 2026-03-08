@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../theme/theme.dart';
@@ -42,29 +43,24 @@ class PropertyImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.network(
-      imageUrl,
+    return CachedNetworkImage(
+      imageUrl: imageUrl,
       width: width,
       height: height,
       fit: fit,
-      errorBuilder: (_, __, ___) => _PlaceholderBox(
+      progressIndicatorBuilder: (context, url, downloadProgress) =>
+          _PlaceholderBox(
+        icon: _placeholderIconForType(propertyType),
+        width: width,
+        height: height,
+        showLoading: true,
+        progress: downloadProgress.progress,
+      ),
+      errorWidget: (context, url, error) => _PlaceholderBox(
         icon: _placeholderIconForType(propertyType),
         width: width,
         height: height,
       ),
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) return child;
-        return _PlaceholderBox(
-          icon: _placeholderIconForType(propertyType),
-          width: width,
-          height: height,
-          showLoading: true,
-          progress: loadingProgress.expectedTotalBytes != null
-              ? loadingProgress.cumulativeBytesLoaded /
-                  (loadingProgress.expectedTotalBytes ?? 1)
-              : null,
-        );
-      },
     );
   }
 }
@@ -94,7 +90,7 @@ class _PlaceholderBox extends StatelessWidget {
         border: Border.all(color: AppTheme.borderColor),
       ),
       child: Center(
-        child: showLoading && progress != null
+        child: showLoading
             ? SizedBox(
                 width: 32,
                 height: 32,
@@ -127,26 +123,29 @@ class AgentAvatarImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final placeholder = Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        border: Border.all(color: AppTheme.borderColor),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
+        LucideIcons.user,
+        size: size * 0.5,
+        color: AppTheme.textSecondary,
+      ),
+    );
+
     return ClipOval(
-      child: Image.network(
-        imageUrl,
+      child: CachedNetworkImage(
+        imageUrl: imageUrl,
         width: size,
         height: size,
         fit: BoxFit.cover,
-        errorBuilder: (_, __, ___) => Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            color: AppTheme.surfaceColor,
-            border: Border.all(color: AppTheme.borderColor),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(
-            LucideIcons.user,
-            size: size * 0.5,
-            color: AppTheme.textSecondary,
-          ),
-        ),
+        placeholder: (context, url) => placeholder,
+        errorWidget: (context, url, error) => placeholder,
       ),
     );
   }

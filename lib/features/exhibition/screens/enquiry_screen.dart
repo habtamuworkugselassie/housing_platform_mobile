@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import '../widgets/exhibition_interest_form.dart';
 
 /// Enquiry tab: Exhibition stakeholder registration form.
@@ -11,9 +12,9 @@ class EnquiryScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: const Text('Enquiry'),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
       ),
       body: SingleChildScrollView(

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pinput/pinput.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import '../../marketplace/screens/root_screen.dart';
 import 'register_screen.dart';
 
@@ -111,6 +112,7 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: const Text('Login Verification'),
       ),
       body: SafeArea(

@@ -8,6 +8,7 @@ import '../../../core/network/media_helper.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/property_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import '../widgets/property_card.dart';
 import '../../property/screens/property_detail_screen.dart';
 
@@ -76,14 +77,24 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
     if (_loading) {
       return Scaffold(
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        appBar: AppBar(title: const Text('Organization'), backgroundColor: AppTheme.scaffoldBackgroundColor),
+        appBar: AppBar(
+          leading: const CustomBackButton(),
+          title: const Text('Organization'),
+          backgroundColor: AppTheme.scaffoldBackgroundColor,
+          elevation: 0,
+        ),
         body: const Center(child: CircularProgressIndicator()),
       );
     }
     if (_error != null || _organization == null) {
       return Scaffold(
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        appBar: AppBar(title: const Text('Organization'), backgroundColor: AppTheme.scaffoldBackgroundColor),
+        appBar: AppBar(
+          leading: const CustomBackButton(),
+          title: const Text('Organization'),
+          backgroundColor: AppTheme.scaffoldBackgroundColor,
+          elevation: 0,
+        ),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
@@ -110,9 +121,9 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: Text(org.name, overflow: TextOverflow.ellipsis),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
       ),
       body: SingleChildScrollView(
@@ -127,7 +138,7 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
               decoration: BoxDecoration(
                 color: const Color(0xFF27272A),
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
@@ -152,7 +163,7 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
                           gradient: LinearGradient(
                             begin: Alignment.bottomCenter,
                             end: Alignment.topCenter,
-                            colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
+                            colors: [Colors.black.withOpacity(0.8), Colors.transparent],
                           ),
                         ),
                         child: Row(
@@ -173,7 +184,7 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
                                 width: 48,
                                 height: 48,
                                 decoration: BoxDecoration(
-                                  color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                                  color: AppTheme.primaryColor.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 alignment: Alignment.center,
@@ -188,16 +199,26 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(
-                                    org.name,
-                                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          org.name,
+                                          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      if (org.verified) ...[
+                                        const SizedBox(width: 6),
+                                        const Icon(LucideIcons.badgeCheck, color: AppTheme.verifiedBadgeBlue, size: 18),
+                                      ],
+                                    ],
                                   ),
                                   if (org.displayLocation.trim().isNotEmpty)
                                     Text(
                                       org.displayLocation,
-                                      style: TextStyle(color: Colors.white.withValues(alpha: 0.9), fontSize: 12),
+                                      style: TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 12),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -340,7 +361,7 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
+              color: AppTheme.primaryColor.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             alignment: Alignment.center,

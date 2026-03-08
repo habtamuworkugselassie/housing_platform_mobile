@@ -22,7 +22,8 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(propertyProvider.notifier).loadInitial());
+    // Use explorePropertyProvider for independent state
+    Future.microtask(() => ref.read(explorePropertyProvider.notifier).loadInitial());
     _scrollController.addListener(_onScroll);
   }
 
@@ -35,13 +36,13 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
 
   void _onScroll() {
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      ref.read(propertyProvider.notifier).loadMore();
+      ref.read(explorePropertyProvider.notifier).loadMore();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final propertyState = ref.watch(propertyProvider);
+    final propertyState = ref.watch(explorePropertyProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
@@ -70,7 +71,7 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                     const SizedBox(height: 16),
                     TextField(
                       controller: _searchController,
-                      onSubmitted: (q) => ref.read(propertyProvider.notifier).loadInitial(searchTerm: q),
+                      onSubmitted: (q) => ref.read(explorePropertyProvider.notifier).loadInitial(searchTerm: q),
                       decoration: InputDecoration(
                         hintText: 'Search properties...',
                         prefixIcon: const Icon(LucideIcons.search, color: AppTheme.textSecondary),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import 'organization_list_screen.dart';
 
 /// Marketplace categories matching the frontend: organizations grouped by type.
@@ -42,9 +43,9 @@ class MarketplaceScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: const Text('Marketplace'),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
       ),
       body: ListView(
@@ -86,7 +87,7 @@ class MarketplaceScreen extends StatelessWidget {
                           width: 48,
                           height: 48,
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withValues(alpha: 0.12),
+                            color: AppTheme.primaryColor.withOpacity(0.12),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Icon(

@@ -8,6 +8,7 @@ import '../../../core/providers/root_tab_provider.dart';
 import '../widgets/property_card.dart';
 import '../widgets/category_selector.dart';
 import '../widgets/sponsor_carousel_widget.dart';
+import '../widgets/filter_bottom_sheet.dart';
 import '../screens/marketplace_screen.dart';
 import '../../property/screens/property_detail_screen.dart';
 import '../../auth/screens/auth_screen.dart';
@@ -60,6 +61,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     ref.read(propertyProvider.notifier).loadInitial(
       searchTerm: query.isEmpty ? null : query,
       category: selectedCategory,
+    );
+  }
+
+  void _showFilterBottomSheet() {
+    final currentState = ref.read(propertyProvider);
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+        child: FilterBottomSheet(
+          initialMinPrice: currentState.minPrice,
+          initialMaxPrice: currentState.maxPrice,
+          initialBedrooms: currentState.bedrooms,
+          initialBathrooms: currentState.bathrooms,
+          onApply: (minPrice, maxPrice, bedrooms, bathrooms) {
+            ref.read(propertyProvider.notifier).loadInitial(
+              searchTerm: _searchController.text.trim().isEmpty ? null : _searchController.text,
+              category: selectedCategory,
+              minPrice: minPrice,
+              maxPrice: maxPrice,
+              bedrooms: bedrooms,
+              bathrooms: bathrooms,
+            );
+          },
+        ),
+      ),
     );
   }
 
@@ -191,15 +220,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
           ),
           if (ref.watch(authProvider).isAuthenticated)
-            Container(
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(color: AppTheme.borderColor, width: 2),
-              ),
-              child: const CircleAvatar(
-                radius: 20,
-                backgroundImage: NetworkImage(
-                    'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'),
+            GestureDetector(
+              onTap: () => ref.read(rootTabIndexProvider.notifier).state = 4,
+              child: Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: AppTheme.borderColor, width: 2),
+                ),
+                child: CircleAvatar(
+                  radius: 20,
+                  backgroundColor: AppTheme.primaryColor,
+                  child: Text(
+                    (ref.watch(authProvider).user?.firstName ?? 'U').isNotEmpty
+                        ? (ref.watch(authProvider).user!.firstName[0].toUpperCase())
+                        : 'U',
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                ),
               ),
             )
           else
@@ -262,9 +299,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ),
             child: IconButton(
               icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.black),
-              onPressed: () {
-                // Show filter bottom sheet
-              },
+              onPressed: _showFilterBottomSheet,
             ),
           ),
         ],

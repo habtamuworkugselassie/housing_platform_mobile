@@ -7,6 +7,7 @@ class AuthResponse {
   final String email;
   final String firstName;
   final String lastName;
+  final String? phoneNumber;
   final List<String> roles;
   final List<String> scopes;
 
@@ -19,6 +20,7 @@ class AuthResponse {
     required this.email,
     required this.firstName,
     required this.lastName,
+    this.phoneNumber,
     required this.roles,
     required this.scopes,
   });
@@ -33,6 +35,7 @@ class AuthResponse {
       email: json['email'] as String? ?? '',
       firstName: json['firstName'] as String? ?? '',
       lastName: json['lastName'] as String? ?? '',
+      phoneNumber: json['phoneNumber'] as String?,
       roles: List<String>.from(json['roles'] ?? []),
       scopes: List<String>.from(json['scopes'] ?? []),
     );

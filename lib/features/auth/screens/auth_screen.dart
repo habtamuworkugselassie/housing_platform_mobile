@@ -5,6 +5,7 @@ import '../../../core/data/country_codes.dart';
 import '../../../core/models/auth_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import '../widgets/country_code_phone_input.dart';
 import '../../marketplace/screens/root_screen.dart';
 
@@ -138,6 +139,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: const Text('Sign in', style: TextStyle(color: AppTheme.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,

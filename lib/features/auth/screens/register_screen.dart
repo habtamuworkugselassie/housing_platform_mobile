@@ -4,6 +4,7 @@ import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/models/auth_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import 'phone_verification_screen.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -82,10 +83,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     return Scaffold(
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: const Text('Create Account', style: TextStyle(color: AppTheme.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: AppTheme.textPrimary),
       ),
       body: SafeArea(
         child: SingleChildScrollView(

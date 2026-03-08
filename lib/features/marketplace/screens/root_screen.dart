@@ -4,6 +4,7 @@ import '../../../core/providers/root_tab_provider.dart';
 import 'home_screen.dart';
 import 'explore_screen.dart';
 import '../../exhibition/screens/enquiry_screen.dart';
+import '../../profile/screens/profile_screen.dart';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -21,7 +22,7 @@ class RootScreen extends ConsumerWidget {
       const ExploreScreen(),
       const EnquiryScreen(),
       if (isAuthenticated) const Scaffold(body: Center(child: Text('Saved Properties Placeholder'))),
-      if (isAuthenticated) const Scaffold(body: Center(child: Text('Profile Placeholder'))),
+      if (isAuthenticated) const ProfileScreen(),
     ];
 
     final safeIndex = currentIndex >= activeScreens.length ? 0 : currentIndex;

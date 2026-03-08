@@ -15,6 +15,12 @@ class PropertyState {
   final String? error;
   final bool hasMore;
   final int currentPage;
+  
+  // Filter state
+  final double? minPrice;
+  final double? maxPrice;
+  final int? bedrooms;
+  final int? bathrooms;
 
   const PropertyState({
     this.isLoading = false,
@@ -24,6 +30,10 @@ class PropertyState {
     this.error,
     this.hasMore = true,
     this.currentPage = 0,
+    this.minPrice,
+    this.maxPrice,
+    this.bedrooms,
+    this.bathrooms,
   });
 
   PropertyState copyWith({
@@ -35,6 +45,10 @@ class PropertyState {
     bool? hasMore,
     int? currentPage,
     bool clearError = false,
+    double? minPrice,
+    double? maxPrice,
+    int? bedrooms,
+    int? bathrooms,
   }) {
     return PropertyState(
       isLoading: isLoading ?? this.isLoading,
@@ -44,6 +58,10 @@ class PropertyState {
       error: clearError ? null : (error ?? this.error),
       hasMore: hasMore ?? this.hasMore,
       currentPage: currentPage ?? this.currentPage,
+      minPrice: minPrice ?? this.minPrice,
+      maxPrice: maxPrice ?? this.maxPrice,
+      bedrooms: bedrooms ?? this.bedrooms,
+      bathrooms: bathrooms ?? this.bathrooms,
     );
   }
 }
@@ -87,14 +105,32 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
 
   PropertyNotifier(this._propertyService) : super(const PropertyState());
 
-  Future<void> loadInitial({String? city, String? searchTerm, String? category}) async {
+  Future<void> loadInitial({
+    String? city,
+    String? searchTerm,
+    String? category,
+    double? minPrice,
+    double? maxPrice,
+    int? bedrooms,
+    int? bathrooms,
+  }) async {
     if (state.isLoading) return;
     
     _currentCity = city;
     _currentSearchTerm = searchTerm;
     _currentType = _categoryToBackendType(category);
     
-    state = state.copyWith(isLoading: true, clearError: true, currentPage: 0, properties: []);
+    // Update state with new filters
+    state = state.copyWith(
+      isLoading: true,
+      clearError: true,
+      currentPage: 0,
+      properties: [],
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      bedrooms: bedrooms,
+      bathrooms: bathrooms,
+    );
     
     try {
       if (_currentSearchTerm != null && _currentSearchTerm!.isNotEmpty) {
@@ -102,6 +138,10 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
         final results = await _propertyService.searchProperties(
           title: _currentSearchTerm,
           city: _currentCity,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          bedrooms: bedrooms,
+          bathrooms: bathrooms,
         );
         var list = results;
         if (_currentType != null) {
@@ -119,6 +159,10 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
           size: pageSize,
           city: _currentCity,
           type: _currentType,
+          minPrice: minPrice,
+          maxPrice: maxPrice,
+          bedrooms: bedrooms,
+          bathrooms: bathrooms,
         );
         final sorted = _sortSponsoredAndVerifiedFirst(pagedData.content);
         final featured = sorted.where((p) => p.isFeatured).toList();
@@ -152,6 +196,10 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
         size: pageSize,
         city: _currentCity,
         type: _currentType,
+        minPrice: state.minPrice,
+        maxPrice: state.maxPrice,
+        bedrooms: state.bedrooms,
+        bathrooms: state.bathrooms,
       );
       
       final featured = pagedData.content.where((p) => p.isFeatured).toList();
@@ -182,7 +230,12 @@ class PropertyNotifier extends StateNotifier<PropertyState> {
   }
 }
 
-// Global Provider
+// Global Provider for Home Screen
 final propertyProvider = StateNotifierProvider<PropertyNotifier, PropertyState>((ref) {
+  return PropertyNotifier(ref.read(propertyServiceProvider));
+});
+
+// Separate Provider for Explore Screen to maintain independent state/pagination
+final explorePropertyProvider = StateNotifierProvider<PropertyNotifier, PropertyState>((ref) {
   return PropertyNotifier(ref.read(propertyServiceProvider));
 });

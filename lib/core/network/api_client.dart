@@ -14,6 +14,10 @@ class ApiClient {
 
   ApiClient({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage() {
+    
+    // Log the base URL on initialization
+    debugPrint('ApiClient initialized with Base URL: ${ApiConfig.baseUrl}');
+
     _dio = Dio(BaseOptions(
       baseUrl: ApiConfig.baseUrl,
       connectTimeout: const Duration(seconds: 15),
@@ -65,12 +69,22 @@ class ApiClient {
       },
     ));
 
+    // Always add LogInterceptor for debugging purposes, even in release if needed for investigation
+    // Or keep it restricted to debug mode but ensure we log critical info
     if (kDebugMode) {
       _dio.interceptors.add(LogInterceptor(
         requestBody: true,
         responseBody: true,
         logPrint: (obj) => debugPrint(obj.toString()),
       ));
+    } else {
+       // In release mode, maybe log only errors or basic request info
+       _dio.interceptors.add(InterceptorsWrapper(
+         onError: (e, handler) {
+           debugPrint('DioError: ${e.message} | Path: ${e.requestOptions.path}');
+           return handler.next(e);
+         }
+       ));
     }
   }
 
@@ -131,7 +145,7 @@ class ApiClient {
         e.type == DioExceptionType.connectionError) {
       return DioException(
         requestOptions: e.requestOptions,
-        error: const NetworkException('Please check your internet connection.'),
+        error: NetworkException('Please check your internet connection. (Base URL: ${ApiConfig.baseUrl})'),
       );
     }
     

@@ -2,41 +2,41 @@ import 'dart:io' show Platform;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/models/property_model.dart';
 import '../../../core/widgets/property_image.dart';
+import '../../../core/providers/review_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 
-class PropertyDetailScreen extends StatelessWidget {
+class PropertyDetailScreen extends ConsumerWidget {
   final PropertyModel property;
 
   const PropertyDetailScreen({Key? key, required this.property})
       : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
-      // We extend the body behind the App Bar for a transparent header effect
       extendBodyBehindAppBar: true,
-      appBar: _buildTransparentAppBar(context),
+      appBar: _buildTransparentAppBar(context, ref),
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(
-                bottom: 100), // Space for sticky bottom bar
+            padding: const EdgeInsets.only(bottom: 100),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildImageHeader(context),
-                _buildContentBody(context),
+                _buildContentBody(context, ref),
               ],
             ),
           ),
-
-          // Sticky Bottom Action Bar
           Positioned(
             bottom: 0,
             left: 0,
@@ -48,7 +48,21 @@ class PropertyDetailScreen extends StatelessWidget {
     );
   }
 
-  AppBar _buildTransparentAppBar(BuildContext context) {
+  bool _checkAuth(BuildContext context, WidgetRef ref) {
+    final authState = ref.read(authProvider);
+    if (authState.user == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please log in to perform this action.'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return false;
+    }
+    return true;
+  }
+
+  AppBar _buildTransparentAppBar(BuildContext context, WidgetRef ref) {
     return AppBar(
       backgroundColor: Colors.transparent,
       elevation: 0,
@@ -91,7 +105,9 @@ class PropertyDetailScreen extends StatelessWidget {
             child: IconButton(
               icon: const Icon(LucideIcons.share2,
                   color: AppTheme.textPrimary, size: 20),
-              onPressed: () {},
+              onPressed: () {
+                Share.share('Check out this property: ${property.title}');
+              },
             ),
           ),
         ),
@@ -112,7 +128,11 @@ class PropertyDetailScreen extends StatelessWidget {
             child: IconButton(
               icon: const Icon(LucideIcons.heart,
                   color: AppTheme.textPrimary, size: 20),
-              onPressed: () {},
+              onPressed: () {
+                if (_checkAuth(context, ref)) {
+                  // TODO: Toggle favorite
+                }
+              },
             ),
           ),
         ),
@@ -135,7 +155,6 @@ class PropertyDetailScreen extends StatelessWidget {
             width: double.infinity,
             fit: BoxFit.cover,
           ),
-          // Gradient Overlay to ensure back button visibility
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -174,14 +193,13 @@ class PropertyDetailScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildContentBody(BuildContext context) {
+  Widget _buildContentBody(BuildContext context, WidgetRef ref) {
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.scaffoldBackgroundColor,
         borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
       ),
-      transform:
-          Matrix4.translationValues(0, -20, 0), // Pull up over the gradient
+      transform: Matrix4.translationValues(0, -20, 0),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
         child: Column(
@@ -198,7 +216,9 @@ class PropertyDetailScreen extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '\$${property.price.toStringAsFixed(0)}',
+                  property.priceETB > 0 
+                      ? 'ETB ${property.price.toStringAsFixed(0)}'
+                      : '\$${property.price.toStringAsFixed(0)}',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
                         color: AppTheme.primaryColor,
                       ),
@@ -249,6 +269,13 @@ class PropertyDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             _buildAgentCard(context),
+            const SizedBox(height: 24),
+            Text(
+              'Reviews',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+            const SizedBox(height: 12),
+            _buildReviewSection(context, ref),
           ],
         ),
       ),
@@ -440,27 +467,255 @@ class PropertyDetailScreen extends StatelessWidget {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.primaryColor.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+          InkWell(
+            onTap: () {
+              // TODO: Implement chat functionality
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.primaryColor.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.messageCircle,
+                  color: AppTheme.primaryColor, size: 20),
             ),
-            child: const Icon(LucideIcons.messageCircle,
-                color: AppTheme.primaryColor, size: 20),
           ),
           const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppTheme.success.withValues(alpha: 0.2),
-              shape: BoxShape.circle,
+          InkWell(
+            onTap: () async {
+              final Uri launchUri = Uri(
+                scheme: 'tel',
+                path: property.agent.phone,
+              );
+              if (await canLaunchUrl(launchUri)) {
+                await launchUrl(launchUri);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.success.withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(LucideIcons.phoneCall,
+                  color: AppTheme.success, size: 20),
             ),
-            child: const Icon(LucideIcons.phoneCall,
-                color: AppTheme.success, size: 20),
           )
         ],
       ),
+    );
+  }
+
+  Widget _buildReviewSection(BuildContext context, WidgetRef ref) {
+    final reviewState = ref.watch(reviewProvider(property.id));
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (reviewState.isLoading)
+          const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+        else if (reviewState.error != null)
+          Text(
+            'Failed to load reviews.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.error,
+                ),
+          )
+        else if (reviewState.reviews.isEmpty)
+          Text(
+            'No reviews yet.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: AppTheme.textSecondary,
+                ),
+          )
+        else
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: reviewState.reviews.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 16),
+            itemBuilder: (context, index) {
+              final review = reviewState.reviews[index];
+              return Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppTheme.borderColor),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 16,
+                          backgroundImage: review.userImageUrl != null
+                              ? NetworkImage(review.userImageUrl!)
+                              : null,
+                          child: review.userImageUrl == null
+                              ? const Icon(LucideIcons.user, size: 16)
+                              : null,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            review.userName,
+                            style: Theme.of(context).textTheme.titleSmall,
+                          ),
+                        ),
+                        Row(
+                          children: List.generate(5, (starIndex) {
+                            return Icon(
+                              starIndex < review.rating
+                                  ? Icons.star
+                                  : Icons.star_border,
+                              size: 14,
+                              color: AppTheme.primaryColor,
+                            );
+                          }),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      review.comment,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        const SizedBox(height: 16),
+        OutlinedButton(
+          onPressed: () {
+            if (_checkAuth(context, ref)) {
+              _showReviewDialog(context, ref);
+            }
+          },
+          style: OutlinedButton.styleFrom(
+            foregroundColor: AppTheme.primaryColor,
+            side: const BorderSide(color: AppTheme.primaryColor),
+          ),
+          child: const Text('Write a Review'),
+        ),
+      ],
+    );
+  }
+
+  void _showReviewDialog(BuildContext context, WidgetRef ref) {
+    int rating = 5;
+    final commentController = TextEditingController();
+    bool isSubmitting = false;
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: AppTheme.surfaceColor,
+              title: const Text('Write a Review', style: TextStyle(color: AppTheme.textPrimary)),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(5, (index) {
+                      return IconButton(
+                        icon: Icon(
+                          index < rating ? Icons.star : Icons.star_border,
+                          color: AppTheme.primaryColor,
+                          size: 32,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            rating = index + 1;
+                          });
+                        },
+                      );
+                    }),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: commentController,
+                    style: const TextStyle(color: AppTheme.textPrimary),
+                    decoration: const InputDecoration(
+                      hintText: 'Enter your review here...',
+                      hintStyle: TextStyle(color: AppTheme.textSecondary),
+                      border: OutlineInputBorder(),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.borderColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide: BorderSide(color: AppTheme.primaryColor),
+                      ),
+                    ),
+                    maxLines: 3,
+                  ),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.pop(context),
+                  child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+                ),
+                ElevatedButton(
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          if (commentController.text.isEmpty) return;
+                          
+                          setState(() {
+                            isSubmitting = true;
+                          });
+
+                          try {
+                            await ref
+                                .read(reviewProvider(property.id).notifier)
+                                .submitReview(rating, commentController.text);
+                            
+                            if (context.mounted) {
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Review submitted successfully!'),
+                                  backgroundColor: AppTheme.success,
+                                ),
+                              );
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              setState(() {
+                                isSubmitting = false;
+                              });
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Failed to submit review: $e'),
+                                  backgroundColor: AppTheme.error,
+                                ),
+                              );
+                            }
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.black,
+                          ),
+                        )
+                      : const Text('Submit'),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -485,7 +740,15 @@ class PropertyDetailScreen extends StatelessWidget {
           children: [
             Expanded(
               child: OutlinedButton(
-                onPressed: () {},
+                onPressed: () async {
+                  final Uri launchUri = Uri(
+                    scheme: 'tel',
+                    path: property.agent.phone,
+                  );
+                  if (await canLaunchUrl(launchUri)) {
+                    await launchUrl(launchUri);
+                  }
+                },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primaryColor,
                   side: const BorderSide(color: AppTheme.primaryColor),

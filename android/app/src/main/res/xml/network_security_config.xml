@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Allow cleartext HTTP so the app can call http://DROPLET_IP:8080 when built with --dart-define=API_BASE_URL.
-     For production, prefer HTTPS and a proper domain (no cleartext needed). -->
+<!-- Allow cleartext HTTP so the app can call http://DROPLET_IP:8080 when built with dart-define API_BASE_URL.
+     For production, prefer HTTPS and a proper domain. -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="true">
         <trust-anchors>

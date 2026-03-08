@@ -5,6 +5,7 @@ import '../../../core/models/organization_model.dart';
 import '../../../core/network/media_helper.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import 'organization_detail_screen.dart';
 
 class OrganizationListScreen extends ConsumerStatefulWidget {
@@ -61,9 +62,9 @@ class _OrganizationListScreenState extends ConsumerState<OrganizationListScreen>
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         title: Text(widget.title),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
-        foregroundColor: AppTheme.textPrimary,
         elevation: 0,
       ),
       body: RefreshIndicator(
@@ -195,7 +196,7 @@ class _OrganizationTile extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withValues(alpha: 0.12),
+        color: AppTheme.primaryColor.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
       ),
       alignment: Alignment.center,

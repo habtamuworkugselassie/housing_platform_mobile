@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -58,6 +59,16 @@ class _SponsorCarouselWidgetState extends ConsumerState<SponsorCarouselWidget> {
     });
   }
 
+  void _preloadSlideImages(BuildContext context, List<SponsoredOrganizationModel> slides) {
+    const maxPreload = 5;
+    for (var i = 0; i < slides.length && i < maxPreload; i++) {
+      final url = mediaUrl(slides[i].splashImageUrl ?? slides[i].logoUrl);
+      if (url != null && url.isNotEmpty) {
+        precacheImage(CachedNetworkImageProvider(url), context);
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final asyncSlides = ref.watch(premiumSponsorSlidesProvider);
@@ -68,6 +79,8 @@ class _SponsorCarouselWidgetState extends ConsumerState<SponsorCarouselWidget> {
         if (_autoplayTimer == null || !_autoplayTimer!.isActive) {
           WidgetsBinding.instance.addPostFrameCallback((_) => _startAutoplay(slides.length));
         }
+        // Preload carousel images so they appear faster when swiping
+        _preloadSlideImages(context, slides);
         return SizedBox(
           height: widget.height,
           child: Stack(
@@ -166,21 +179,28 @@ class _SlidePageState extends State<_SlidePage> {
   @override
   Widget build(BuildContext context) {
     final sponsor = widget.sponsor;
-    final imageUrl = mediaUrl(sponsor.splashImageUrl ?? sponsor.logoUrl);
+    final splashUrl = mediaUrl(sponsor.splashImageUrl ?? sponsor.logoUrl);
+    final logoUrlResolved = mediaUrl(sponsor.logoUrl);
 
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Media: prefer image for performance; video can be added with video_player for current slide only
-        if (imageUrl != null && imageUrl.isNotEmpty)
-          Image.network(
-            imageUrl,
-            fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => _placeholder(),
-            loadingBuilder: (context, child, loadingProgress) {
-              if (loadingProgress == null) return child;
-              return _placeholder();
-            },
+        // Media: fit full image within carousel (no crop); same origin as API
+        if (splashUrl != null && splashUrl.isNotEmpty)
+          Container(
+            color: const Color(0xFF27272A),
+            alignment: Alignment.center,
+            child: CachedNetworkImage(
+              imageUrl: splashUrl,
+              fit: BoxFit.contain,
+              memCacheWidth: 800,
+              memCacheHeight: 450,
+              maxWidthDiskCache: 800,
+              maxHeightDiskCache: 450,
+              fadeInDuration: const Duration(milliseconds: 200),
+              placeholder: (_, __) => _placeholder(),
+              errorWidget: (_, __, ___) => _placeholder(),
+            ),
           )
         else
           _placeholder(),
@@ -193,15 +213,18 @@ class _SlidePageState extends State<_SlidePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (sponsor.logoUrl != null && sponsor.logoUrl!.trim().isNotEmpty)
+              if (logoUrlResolved != null && logoUrlResolved.isNotEmpty)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    mediaUrl(sponsor.logoUrl)!,
+                  child: CachedNetworkImage(
+                    imageUrl: logoUrlResolved,
                     height: 48,
                     width: 48,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => _initialCircle(sponsor.name),
+                    memCacheWidth: 96,
+                    memCacheHeight: 96,
+                    placeholder: (_, __) => _initialCircle(sponsor.name),
+                    errorWidget: (_, __, ___) => _initialCircle(sponsor.name),
                   ),
                 )
               else

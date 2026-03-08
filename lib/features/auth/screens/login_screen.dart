@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/custom_back_button.dart';
 import 'register_screen.dart';
 import 'otp_login_screen.dart';
 import '../../marketplace/screens/home_screen.dart';
@@ -60,6 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     return Scaffold(
       backgroundColor: AppTheme.surfaceColor,
       appBar: AppBar(
+        leading: const CustomBackButton(),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
