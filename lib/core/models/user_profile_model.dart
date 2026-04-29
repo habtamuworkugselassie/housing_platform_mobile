@@ -13,6 +13,7 @@ class UserProfile {
   final DateTime? updatedAt;
   final String? organizationId;
   final bool enabled;
+  final String? profileImageUrl;
 
   const UserProfile({
     required this.id,
@@ -28,6 +29,7 @@ class UserProfile {
     this.updatedAt,
     this.organizationId,
     this.enabled = true,
+    this.profileImageUrl,
   });
 
   String get fullName => '$firstName $lastName'.trim();
@@ -56,6 +58,7 @@ class UserProfile {
       updatedAt: json['updatedAt'] != null ? DateTime.tryParse(json['updatedAt'].toString()) : null,
       organizationId: json['organizationId']?.toString(),
       enabled: json['enabled'] as bool? ?? true,
+      profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
 }

@@ -17,6 +17,23 @@ class OrganizationMediaItem {
   bool get isVideo => (mediaKind ?? '').toUpperCase().contains('VIDEO');
 }
 
+/// Material supplier marketplace subcategory (from API).
+class SupplierSubcategoryRef {
+  final String id;
+  final String name;
+  final String? slug;
+
+  const SupplierSubcategoryRef({required this.id, required this.name, this.slug});
+
+  factory SupplierSubcategoryRef.fromJson(Map<String, dynamic> json) {
+    return SupplierSubcategoryRef(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      slug: json['slug']?.toString(),
+    );
+  }
+}
+
 /// Model for marketplace organization listing and detail (GET /organizations/marketplace, GET /organizations/:id).
 class OrganizationModel {
   final String id;
@@ -28,6 +45,11 @@ class OrganizationModel {
   final String? country;
   final String? email;
   final String? website;
+  final String? facebookUrl;
+  final String? instagramUrl;
+  final String? linkedinUrl;
+  final String? twitterUrl;
+  final String? youtubeUrl;
   final String? description;
   final String? logoUrl;
   final bool verified;
@@ -36,6 +58,7 @@ class OrganizationModel {
   final List<OrganizationMediaItem>? media;
   final String? registrationNumber;
   final String? createdAt;
+  final List<SupplierSubcategoryRef> supplierSubcategories;
 
   const OrganizationModel({
     required this.id,
@@ -47,6 +70,11 @@ class OrganizationModel {
     this.country,
     this.email,
     this.website,
+    this.facebookUrl,
+    this.instagramUrl,
+    this.linkedinUrl,
+    this.twitterUrl,
+    this.youtubeUrl,
     this.description,
     this.logoUrl,
     this.verified = false,
@@ -55,6 +83,7 @@ class OrganizationModel {
     this.media,
     this.registrationNumber,
     this.createdAt,
+    this.supplierSubcategories = const [],
   });
 
   factory OrganizationModel.fromJson(Map<String, dynamic> json) {
@@ -72,6 +101,13 @@ class OrganizationModel {
               e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
           .toList();
     }
+    List<SupplierSubcategoryRef> subcats = [];
+    if (json['supplierSubcategories'] is List) {
+      subcats = (json['supplierSubcategories'] as List)
+          .map((e) => SupplierSubcategoryRef.fromJson(
+              e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+          .toList();
+    }
     return OrganizationModel(
       id: json['id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
@@ -82,6 +118,11 @@ class OrganizationModel {
       country: json['country']?.toString(),
       email: json['email']?.toString(),
       website: json['website']?.toString(),
+      facebookUrl: json['facebookUrl']?.toString(),
+      instagramUrl: json['instagramUrl']?.toString(),
+      linkedinUrl: json['linkedinUrl']?.toString(),
+      twitterUrl: json['twitterUrl']?.toString(),
+      youtubeUrl: json['youtubeUrl']?.toString(),
       description: json['description']?.toString(),
       logoUrl: json['logoUrl']?.toString(),
       verified: json['verified'] == true,
@@ -90,12 +131,18 @@ class OrganizationModel {
       media: mediaList,
       registrationNumber: json['registrationNumber']?.toString(),
       createdAt: json['createdAt']?.toString(),
+      supplierSubcategories: subcats,
     );
   }
 
   String get displayLocation {
     final parts = [address, city, country].where((e) => e != null && e.toString().trim().isNotEmpty).toList();
     return parts.join(', ');
+  }
+
+  bool get hasSocialUrls {
+    bool n(String? s) => s != null && s.trim().isNotEmpty;
+    return n(facebookUrl) || n(instagramUrl) || n(linkedinUrl) || n(twitterUrl) || n(youtubeUrl);
   }
 }
 

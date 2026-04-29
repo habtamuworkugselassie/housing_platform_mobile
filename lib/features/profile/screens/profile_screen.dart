@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons/lucide_icons.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 import '../../../core/models/user_profile_model.dart';
 import '../../../core/network/api_config.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/profile_provider.dart';
 import '../../../core/providers/root_tab_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/network/media_helper.dart';
 import '../screens/edit_profile_screen.dart';
 
 /// Profile screen: view profile, edit, logout. Accessible from bottom nav when logged in.
@@ -180,16 +183,47 @@ class _ProfileContent extends ConsumerWidget {
   }
 }
 
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   final UserProfile profile;
 
   const _ProfileHeader({required this.profile});
 
+  Future<void> _pickAndUploadImage(BuildContext context, WidgetRef ref) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Uploading profile picture...')),
+      );
+      try {
+        final userService = ref.read(userServiceProvider);
+        final updatedProfile = await userService.uploadProfileImage(File(pickedFile.path));
+        if (context.mounted) {
+          ref.read(authProvider.notifier).updateUserFromProfile(updatedProfile);
+          ref.invalidate(profileProvider);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile picture updated successfully!'), backgroundColor: AppTheme.success),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to upload image: $e'), backgroundColor: AppTheme.error),
+          );
+        }
+      }
+    }
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final initial = profile.firstName.isNotEmpty
         ? profile.firstName[0].toUpperCase()
         : (profile.email.isNotEmpty ? profile.email[0].toUpperCase() : 'U');
+        
+    final imageUrl = mediaUrl(profile.profileImageUrl);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -199,12 +233,33 @@ class _ProfileHeader extends StatelessWidget {
       ),
       child: Row(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundColor: AppTheme.primaryColor,
-            child: Text(
-              initial,
-              style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+          GestureDetector(
+            onTap: () => _pickAndUploadImage(context, ref),
+            child: Stack(
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: AppTheme.primaryColor,
+                  backgroundImage: imageUrl != null && imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+                  child: imageUrl == null || imageUrl.isEmpty ? Text(
+                    initial,
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                  ) : null,
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: AppTheme.borderColor),
+                    ),
+                    child: const Icon(LucideIcons.camera, size: 14, color: AppTheme.textPrimary),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 20),

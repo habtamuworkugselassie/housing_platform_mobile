@@ -48,97 +48,107 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     final asyncSlides = ref.watch(exclusiveSponsorSlidesProvider);
+    final media = MediaQuery.of(context);
+    final maxBannerWidth = (media.size.width - 32).clamp(0.0, 520.0);
 
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: AppTheme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Stack(
           fit: StackFit.expand,
           children: [
             // Subtle gradient background
             Container(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    const Color(0xFF0a0a0a),
-                    const Color(0xFF171717),
-                    Colors.black,
+                    Color(0xFF140F2C),
+                    Color(0xFF1A1336),
+                    Color(0xFF241A4A),
                   ],
                 ),
               ),
             ),
-            asyncSlides.when(
-              data: (slides) {
-                if (slides.isEmpty) {
-                  return _buildNoSponsorsContent();
-                }
-                if (slides.length == 1) {
-                  return _buildSingleSponsor(slides.first);
-                }
-                return _buildCarousel(slides);
-              },
-              loading: () => _buildNoSponsorsContent(),
-              error: (_, __) => _buildNoSponsorsContent(),
-            ),
-            // Page indicators when carousel
-            if (asyncSlides.valueOrNull != null && asyncSlides.valueOrNull!.length > 1)
-              Positioned(
-                bottom: 100,
-                left: 0,
-                right: 0,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    asyncSlides.valueOrNull!.length,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentPage == i ? 20 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _currentPage == i ? Colors.white : Colors.white.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(4),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 8),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Center(
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: maxBannerWidth),
+                      child: Image.asset(
+                        'assets/branding/ethio-build-connect-banner.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
                   ),
                 ),
-              ),
-            // App title at top
-            Positioned(
-              top: 24,
-              left: 0,
-              right: 0,
-              child: Text(
-                'Housing Platform',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                textAlign: TextAlign.center,
-              ),
-            ),
-            // Enter button at bottom
-            Positioned(
-              left: 24,
-              right: 24,
-              bottom: 32,
-              child: SafeArea(
-                child: ElevatedButton(
-                  onPressed: _dismissing ? null : _dismiss,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 2,
+                Expanded(
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      asyncSlides.when(
+                        data: (slides) {
+                          if (slides.isEmpty) {
+                            return _buildNoSponsorsContent();
+                          }
+                          if (slides.length == 1) {
+                            return _buildSingleSponsor(slides.first);
+                          }
+                          return _buildCarousel(slides);
+                        },
+                        loading: () => _buildNoSponsorsContent(),
+                        error: (_, __) => _buildNoSponsorsContent(),
+                      ),
+                      if (asyncSlides.valueOrNull != null &&
+                          asyncSlides.valueOrNull!.length > 1)
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 12,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              asyncSlides.valueOrNull!.length,
+                              (i) => Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 4),
+                                width: _currentPage == i ? 20 : 8,
+                                height: 8,
+                                decoration: BoxDecoration(
+                                  color: _currentPage == i
+                                      ? Colors.white
+                                      : Colors.white.withValues(alpha: 0.4),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
-                  child: const Text('Enter'),
                 ),
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+                  child: ElevatedButton(
+                    onPressed: _dismissing ? null : _dismiss,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primaryColor,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
+                    ),
+                    child: const Text('Enter'),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -151,11 +161,15 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.home_work_outlined, size: 72, color: Colors.white.withValues(alpha: 0.3)),
+          Icon(Icons.home_work_outlined,
+              size: 72, color: Colors.white.withValues(alpha: 0.3)),
           const SizedBox(height: 24),
           Text(
             'Welcome',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white70),
+            style: Theme.of(context)
+                .textTheme
+                .titleLarge
+                ?.copyWith(color: Colors.white70),
           ),
         ],
       ),
@@ -216,7 +230,8 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             if (org.sponsorshipType.isNotEmpty) ...[
               const SizedBox(height: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
                   color: AppTheme.primaryColor.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(8),

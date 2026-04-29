@@ -8,17 +8,17 @@ final exclusiveSponsorSlidesProvider = FutureProvider<List<SponsoredOrganization
   return service.getExclusiveOrganizations();
 });
 
-/// Premium sponsor slides for hero carousel: EXCLUSIVE and PREMIUM only,
-/// sorted with EXCLUSIVE first, then by basePrice descending.
+/// Hero carousel: EXCLUSIVE and PLATINUM (legacy API may still return PREMIUM).
 final premiumSponsorSlidesProvider = FutureProvider<List<SponsoredOrganizationModel>>((ref) async {
   final service = ref.watch(sponsorshipServiceProvider);
   final list = await service.getSponsoredOrganizations();
   const exclusive = 'EXCLUSIVE';
-  const premium = 'PREMIUM';
+  const platinum = 'PLATINUM';
+  const legacyPremium = 'PREMIUM';
   final filtered = list
       .where((o) {
         final t = (o.sponsorshipType).toUpperCase();
-        return t == exclusive || t == premium;
+        return t == exclusive || t == platinum || t == legacyPremium;
       })
       .toList();
   filtered.sort((a, b) {

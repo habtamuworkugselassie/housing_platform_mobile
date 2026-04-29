@@ -307,8 +307,8 @@ class _SlidePageState extends State<_SlidePage> {
   Color _tierColor(String? type) {
     if (type == null) return AppTheme.primaryColor;
     final t = type.toUpperCase();
-    if (t.contains('EXCLUSIVE')) return const Color(0xFFFACC15);
-    if (t.contains('PREMIUM')) return const Color(0xFFF59E0B);
+    if (t.contains('EXCLUSIVE')) return AppTheme.primaryColor;
+    if (t.contains('PLATINUM') || t.contains('PREMIUM')) return AppTheme.primaryColorDark;
     return AppTheme.primaryColor;
   }
 
@@ -316,6 +316,7 @@ class _SlidePageState extends State<_SlidePage> {
     if (type == null) return 'Sponsor';
     final t = type.toUpperCase();
     if (t.contains('EXCLUSIVE')) return 'Exclusive';
+    if (t.contains('PLATINUM')) return 'Platinum';
     if (t.contains('PREMIUM')) return 'Premium';
     return type;
   }

@@ -9,13 +9,16 @@ import '../../marketplace/screens/root_screen.dart';
 class PhoneVerificationScreen extends ConsumerStatefulWidget {
   final String phoneNumber;
 
-  const PhoneVerificationScreen({Key? key, required this.phoneNumber}) : super(key: key);
+  const PhoneVerificationScreen({Key? key, required this.phoneNumber})
+      : super(key: key);
 
   @override
-  ConsumerState<PhoneVerificationScreen> createState() => _PhoneVerificationScreenState();
+  ConsumerState<PhoneVerificationScreen> createState() =>
+      _PhoneVerificationScreenState();
 }
 
-class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScreen> {
+class _PhoneVerificationScreenState
+    extends ConsumerState<PhoneVerificationScreen> {
   final TextEditingController _pinController = TextEditingController();
   bool _isLoading = false;
   bool _isResending = false;
@@ -35,9 +38,11 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
 
   Future<void> _sendOtp() async {
     setState(() => _isResending = true);
-    final success = await ref.read(authProvider.notifier).sendVerificationCode(widget.phoneNumber);
+    final success = await ref
+        .read(authProvider.notifier)
+        .sendVerificationCode(widget.phoneNumber);
     setState(() => _isResending = false);
-    
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Verification code sent via WhatsApp!')),
@@ -51,7 +56,9 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
 
   Future<void> _verifyOtp(String pin) async {
     setState(() => _isLoading = true);
-    final success = await ref.read(authProvider.notifier).confirmVerificationCode(widget.phoneNumber, pin);
+    final success = await ref
+        .read(authProvider.notifier)
+        .confirmVerificationCode(widget.phoneNumber, pin);
     setState(() => _isLoading = false);
 
     if (success && mounted) {
@@ -163,7 +170,7 @@ class _PhoneVerificationScreenState extends ConsumerState<PhoneVerificationScree
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

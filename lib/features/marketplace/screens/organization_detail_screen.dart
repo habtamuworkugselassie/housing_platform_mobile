@@ -222,6 +222,23 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
+                                  if (org.type == 'SUPPLIER' && org.supplierSubcategories.isNotEmpty) ...[
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 6,
+                                      runSpacing: 6,
+                                      children: org.supplierSubcategories
+                                          .map(
+                                            (s) => Chip(
+                                              label: Text(s.name, style: const TextStyle(fontSize: 11)),
+                                              visualDensity: VisualDensity.compact,
+                                              backgroundColor: AppTheme.primaryColor.withOpacity(0.2),
+                                              side: BorderSide(color: AppTheme.primaryColor.withOpacity(0.45)),
+                                            ),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -308,7 +325,34 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
                       value: org.website!,
                       onTap: () => launchUrl(Uri.parse(org.website!.startsWith('http') ? org.website! : 'https://${org.website}')),
                     ),
-                  if ((org.email?.trim().isEmpty ?? true) && (org.phoneNumbers == null || org.phoneNumbers!.isEmpty) && (org.website?.trim().isEmpty ?? true))
+                  if (org.hasSocialUrls) ...[
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text('Social media', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: AppTheme.textSecondary)),
+                    ),
+                    const SizedBox(height: 6),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        if (_normalizeExternalUrl(org.facebookUrl) != null)
+                          _SocialUrlChip(label: 'FB', uri: Uri.parse(_normalizeExternalUrl(org.facebookUrl)!)),
+                        if (_normalizeExternalUrl(org.instagramUrl) != null)
+                          _SocialUrlChip(label: 'IG', uri: Uri.parse(_normalizeExternalUrl(org.instagramUrl)!)),
+                        if (_normalizeExternalUrl(org.linkedinUrl) != null)
+                          _SocialUrlChip(label: 'in', uri: Uri.parse(_normalizeExternalUrl(org.linkedinUrl)!)),
+                        if (_normalizeExternalUrl(org.twitterUrl) != null)
+                          _SocialUrlChip(label: 'X', uri: Uri.parse(_normalizeExternalUrl(org.twitterUrl)!)),
+                        if (_normalizeExternalUrl(org.youtubeUrl) != null)
+                          _SocialUrlChip(label: 'YT', uri: Uri.parse(_normalizeExternalUrl(org.youtubeUrl)!)),
+                      ],
+                    ),
+                  ],
+                  if ((org.email?.trim().isEmpty ?? true) &&
+                      (org.phoneNumbers == null || org.phoneNumbers!.isEmpty) &&
+                      (org.website?.trim().isEmpty ?? true) &&
+                      !org.hasSocialUrls)
                     Text('No contact information available.', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary)),
                 ],
               ),
@@ -374,6 +418,36 @@ class _OrganizationDetailScreenState extends ConsumerState<OrganizationDetailScr
           Text(org.name, style: const TextStyle(color: Colors.white70, fontSize: 14), textAlign: TextAlign.center),
         ],
       ),
+    );
+  }
+}
+
+String? _normalizeExternalUrl(String? raw) {
+  if (raw == null) return null;
+  final s = raw.trim();
+  if (s.isEmpty) return null;
+  if (s.startsWith('http://') || s.startsWith('https://')) return s;
+  return 'https://$s';
+}
+
+class _SocialUrlChip extends StatelessWidget {
+  final String label;
+  final Uri uri;
+
+  const _SocialUrlChip({required this.label, required this.uri});
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton(
+      onPressed: () => launchUrl(uri, mode: LaunchMode.externalApplication),
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppTheme.textPrimary,
+        side: BorderSide(color: Colors.white.withOpacity(0.2)),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      ),
+      child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600)),
     );
   }
 }

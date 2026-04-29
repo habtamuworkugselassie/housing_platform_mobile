@@ -29,23 +29,28 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
 
   Future<void> _sendOtp() async {
     setState(() => _isResending = true);
-    final success = await ref.read(authProvider.notifier).sendOtpLogin(widget.phoneNumber);
+    final success =
+        await ref.read(authProvider.notifier).sendOtpLogin(widget.phoneNumber);
     setState(() => _isResending = false);
-    
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Verification code sent via WhatsApp!')),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to send verification code. Please check your number and try again.')),
+        const SnackBar(
+            content: Text(
+                'Failed to send verification code. Please check your number and try again.')),
       );
     }
   }
 
   Future<void> _verifyOtp(String pin) async {
     setState(() => _isLoading = true);
-    final success = await ref.read(authProvider.notifier).confirmOtpLogin(widget.phoneNumber, pin);
+    final success = await ref
+        .read(authProvider.notifier)
+        .confirmOtpLogin(widget.phoneNumber, pin);
     setState(() => _isLoading = false);
 
     if (success && mounted) {
@@ -63,7 +68,9 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
       if (authError != null && authError.contains('User not found')) {
         _pinController.clear();
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No account found for this number. Please register.')),
+          const SnackBar(
+              content:
+                  Text('No account found for this number. Please register.')),
         );
         ref.read(authProvider.notifier).clearError();
         // Redirect to register
@@ -170,7 +177,7 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.primaryColor,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Colors.black,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),

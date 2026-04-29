@@ -48,12 +48,16 @@ class PropertyService {
   }
 
   /// Public: list available properties for an organization (marketplace).
-  Future<List<PropertyModel>> getPropertiesByOrganization(String organizationId) async {
-    final response = await _apiClient.get('/properties/organization/$organizationId/list');
+  Future<List<PropertyModel>> getPropertiesByOrganization(
+      String organizationId) async {
+    final response =
+        await _apiClient.get('/properties/organization/$organizationId/list');
     final list = response.data;
     if (list is! List) return [];
     return list
-        .map((e) => PropertyModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+        .map((e) => PropertyModel.fromJson(e is Map<String, dynamic>
+            ? e
+            : Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
@@ -70,7 +74,9 @@ class PropertyService {
     int? bathrooms,
   }) async {
     final Map<String, dynamic> queryParams = {'limit': limit};
-    if (companyName != null && companyName.isNotEmpty) queryParams['companyName'] = companyName;
+    if (companyName != null && companyName.isNotEmpty) {
+      queryParams['companyName'] = companyName;
+    }
     if (city != null && city.isNotEmpty) queryParams['city'] = city;
     if (state != null && state.isNotEmpty) queryParams['state'] = state;
     if (country != null && country.isNotEmpty) queryParams['country'] = country;
@@ -94,17 +100,29 @@ class PropertyService {
     final list = response.data;
     if (list is! List) return [];
     return list
-        .map((e) => ReviewModel.fromJson(e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
+        .map((e) => ReviewModel.fromJson(e is Map<String, dynamic>
+            ? e
+            : Map<String, dynamic>.from(e as Map)))
         .toList();
   }
 
-  Future<void> submitReview(String propertyId, int rating, String comment) async {
+  Future<void> submitReview(
+    String propertyId,
+    int rating,
+    String comment, {
+    String? userId,
+  }) async {
+    final data = <String, dynamic>{
+      'rating': rating,
+      'comment': comment,
+    };
+    if (userId != null && userId.trim().isNotEmpty) {
+      data['userId'] = userId.trim();
+    }
+
     await _apiClient.post(
       '/properties/$propertyId/reviews',
-      data: {
-        'rating': rating,
-        'comment': comment,
-      },
+      data: data,
     );
   }
 }

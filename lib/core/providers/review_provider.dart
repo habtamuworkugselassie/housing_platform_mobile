@@ -18,11 +18,12 @@ class ReviewState {
     bool? isLoading,
     List<ReviewModel>? reviews,
     String? error,
+    bool clearError = false,
   }) {
     return ReviewState(
       isLoading: isLoading ?? this.isLoading,
       reviews: reviews ?? this.reviews,
-      error: error ?? this.error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -36,28 +37,40 @@ class ReviewNotifier extends StateNotifier<ReviewState> {
   }
 
   Future<void> loadReviews() async {
-    state = state.copyWith(isLoading: true);
+    state = state.copyWith(isLoading: true, clearError: true);
     try {
       final reviews = await _service.getReviews(propertyId);
-      state = state.copyWith(isLoading: false, reviews: reviews);
+      state = state.copyWith(
+        isLoading: false,
+        reviews: reviews,
+        clearError: true,
+      );
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
     }
   }
 
-  Future<void> submitReview(int rating, String comment) async {
+  Future<void> submitReview(int rating, String comment,
+      {String? userId}) async {
     try {
-      await _service.submitReview(propertyId, rating, comment);
+      await _service.submitReview(
+        propertyId,
+        rating,
+        comment,
+        userId: userId,
+      );
       // Refresh reviews after submission
       await loadReviews();
     } catch (e) {
       // Re-throw to let UI handle specific error messages (e.g. toast)
-      throw e;
+      rethrow;
     }
   }
 }
 
-final reviewProvider = StateNotifierProvider.family<ReviewNotifier, ReviewState, String>((ref, propertyId) {
+final reviewProvider =
+    StateNotifierProvider.family<ReviewNotifier, ReviewState, String>(
+        (ref, propertyId) {
   final service = ref.watch(propertyServiceProvider);
   return ReviewNotifier(service, propertyId);
 });

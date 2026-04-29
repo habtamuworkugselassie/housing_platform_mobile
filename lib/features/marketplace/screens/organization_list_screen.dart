@@ -24,6 +24,8 @@ class OrganizationListScreen extends ConsumerStatefulWidget {
 
 class _OrganizationListScreenState extends ConsumerState<OrganizationListScreen> {
   List<OrganizationModel> _organizations = [];
+  List<SupplierSubcategoryRef> _subcategories = [];
+  String? _selectedSubcategoryId;
   bool _loading = true;
   String? _error;
 
@@ -40,9 +42,21 @@ class _OrganizationListScreenState extends ConsumerState<OrganizationListScreen>
     });
     try {
       final service = ref.read(organizationServiceProvider);
-      final list = await service.getMarketplaceOrganizations(widget.organizationType);
+      List<SupplierSubcategoryRef> subs = [];
+      if (widget.organizationType == 'SUPPLIER') {
+        try {
+          subs = await service.getSupplierSubcategoriesPublic();
+        } catch (_) {}
+      } else {
+        _selectedSubcategoryId = null;
+      }
+      final list = await service.getMarketplaceOrganizations(
+        widget.organizationType,
+        subcategoryId: _selectedSubcategoryId,
+      );
       if (mounted) {
         setState(() {
+          _subcategories = subs;
           _organizations = list;
           _loading = false;
         });
@@ -73,13 +87,50 @@ class _OrganizationListScreenState extends ConsumerState<OrganizationListScreen>
             ? const Center(child: CircularProgressIndicator())
             : _error != null
                 ? _errorView()
-                : _organizations.isEmpty
-                    ? _emptyView()
-                    : ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: _organizations.length,
-                        itemBuilder: (context, index) => _OrganizationTile(organization: _organizations[index]),
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (widget.organizationType == 'SUPPLIER' && _subcategories.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                          child: DropdownButtonFormField<String?>(
+                            value: _selectedSubcategoryId,
+                            decoration: InputDecoration(
+                              labelText: 'Material type',
+                              filled: true,
+                              fillColor: AppTheme.surfaceColor,
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            items: [
+                              const DropdownMenuItem<String?>(
+                                value: null,
+                                child: Text('All types'),
+                              ),
+                              ..._subcategories.map(
+                                (s) => DropdownMenuItem<String?>(
+                                  value: s.id,
+                                  child: Text(s.name),
+                                ),
+                              ),
+                            ],
+                            onChanged: (v) {
+                              setState(() => _selectedSubcategoryId = v);
+                              _load();
+                            },
+                          ),
+                        ),
+                      Expanded(
+                        child: _organizations.isEmpty
+                            ? _emptyView()
+                            : ListView.builder(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                itemCount: _organizations.length,
+                                itemBuilder: (context, index) =>
+                                    _OrganizationTile(organization: _organizations[index]),
+                              ),
                       ),
+                    ],
+                  ),
       ),
     );
   }
@@ -153,6 +204,7 @@ class _OrganizationTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       child: ListTile(
         onTap: () => _onTap(context),
+        isThreeLine: organization.supplierSubcategories.isNotEmpty,
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: logoUrl != null && logoUrl.isNotEmpty
             ? ClipRRect(
@@ -173,8 +225,12 @@ class _OrganizationTile extends StatelessWidget {
             color: AppTheme.textPrimary,
           ),
         ),
-        subtitle: organization.displayLocation.trim().isNotEmpty
-            ? Text(
+        subtitle: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (organization.displayLocation.trim().isNotEmpty)
+              Text(
                 organization.displayLocation,
                 style: const TextStyle(
                   fontSize: 12,
@@ -182,8 +238,37 @@ class _OrganizationTile extends StatelessWidget {
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-              )
-            : null,
+              ),
+            if (organization.supplierSubcategories.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Wrap(
+                  spacing: 4,
+                  runSpacing: 4,
+                  children: organization.supplierSubcategories
+                      .map(
+                        (s) => Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor.withOpacity(0.12),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.35)),
+                          ),
+                          child: Text(
+                            s.name,
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: AppTheme.primaryColor.withOpacity(0.95),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      )
+                      .toList(),
+                ),
+              ),
+          ],
+        ),
         trailing: organization.verified
             ? const Icon(LucideIcons.badgeCheck, color: AppTheme.verifiedBadgeBlue, size: 20)
             : null,

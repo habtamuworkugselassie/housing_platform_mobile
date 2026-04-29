@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Brand / Accent (frontend: yellow-400)
-  static const Color primaryColor = Color(0xFFFACC15); // yellow-400
-  static const Color primaryColorLight = Color(0xFFFDE047);
-  static const Color primaryColorDark = Color(0xFFEAB308);
+  // Brand / Accent aligned with white-on-purple style.
+  static const Color primaryColor = Color(0xFFFFFFFF);
+  static const Color primaryColorLight = Color(0xFFF4F4F5);
+  static const Color primaryColorDark = Color(0xFFE4E4E7);
 
-  // Backgrounds & Surfaces (frontend: black, zinc-900)
-  static const Color scaffoldBackgroundColor = Color(0xFF000000); // black
-  static const Color surfaceColor = Color(0xFF18181B); // zinc-900
+  // Backgrounds & Surfaces swapped to purple family
+  static const Color scaffoldBackgroundColor = Color(0xFF1A1336);
+  static const Color surfaceColor = Color(0xFF241A4A);
   static const Color borderColor = Color(0x1AFFFFFF); // white/10
 
   // Text Colors (frontend: white, gray-400)
@@ -37,13 +37,20 @@ class AppTheme {
 
       // Typography relying on default system font (San Francisco on Apple, Roboto on Android)
       textTheme: const TextTheme(
-        displayLarge: TextStyle(color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
-        displayMedium: TextStyle(color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
-        titleLarge: TextStyle(color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
-        titleMedium: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
-        bodyLarge: TextStyle(color: textPrimary, fontSize: 16, fontWeight: FontWeight.normal),
-        bodyMedium: TextStyle(color: textSecondary, fontSize: 14, fontWeight: FontWeight.normal),
-        labelLarge: TextStyle(color: primaryColor, fontSize: 14, fontWeight: FontWeight.w600),
+        displayLarge: TextStyle(
+            color: textPrimary, fontSize: 32, fontWeight: FontWeight.bold),
+        displayMedium: TextStyle(
+            color: textPrimary, fontSize: 24, fontWeight: FontWeight.bold),
+        titleLarge: TextStyle(
+            color: textPrimary, fontSize: 20, fontWeight: FontWeight.w600),
+        titleMedium: TextStyle(
+            color: textPrimary, fontSize: 16, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(
+            color: textPrimary, fontSize: 16, fontWeight: FontWeight.normal),
+        bodyMedium: TextStyle(
+            color: textSecondary, fontSize: 14, fontWeight: FontWeight.normal),
+        labelLarge: TextStyle(
+            color: primaryColor, fontSize: 14, fontWeight: FontWeight.w600),
       ),
 
       // Component Themes
@@ -112,8 +119,10 @@ class AppTheme {
         showUnselectedLabels: true,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
-        selectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
-        unselectedLabelStyle: TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
+        selectedLabelStyle:
+            TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        unselectedLabelStyle:
+            TextStyle(fontSize: 12, fontWeight: FontWeight.normal),
       ),
     );
   }

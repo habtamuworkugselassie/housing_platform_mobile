@@ -6,7 +6,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/theme.dart';
 import '../../auth/widgets/country_code_phone_input.dart';
 
-/// Exhibition interest registration form (same API as frontend: POST /exhibition/interest).
+/// Exhibition interest registration form (same API as frontend: POST /api/v1/exhibition/interest).
 class ExhibitionInterestForm extends ConsumerStatefulWidget {
   const ExhibitionInterestForm({Key? key}) : super(key: key);
 
@@ -20,12 +20,34 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
   final _phoneController = TextEditingController();
   String _organizationType = 'REAL_ESTATE_COMPANY';
   String _interestType = 'visitor';
+  String _sponsorshipPackageId = '';
   final _companyController = TextEditingController();
   final _messageController = TextEditingController();
+
+  List<Map<String, dynamic>> _packages = [];
+  bool _packagesLoading = false;
 
   bool _submitting = false;
   bool _submitted = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPackages());
+  }
+
+  Future<void> _loadPackages() async {
+    setState(() => _packagesLoading = true);
+    try {
+      final list = await ref.read(exhibitionServiceProvider).getActiveSponsorshipPackages();
+      if (mounted) setState(() => _packages = list);
+    } catch (_) {
+      if (mounted) setState(() => _packages = []);
+    } finally {
+      if (mounted) setState(() => _packagesLoading = false);
+    }
+  }
 
   @override
   void dispose() {
@@ -45,6 +67,11 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
     final phoneRaw = _phoneController.text.trim().replaceAll(RegExp(r'\D'), '');
     final phoneNumber = phoneRaw.isEmpty ? null : (_countryCode + phoneRaw);
 
+    if (_interestType == 'exhibitor' && _sponsorshipPackageId.isEmpty) {
+      setState(() => _error = 'Please select a sponsorship package');
+      return;
+    }
+
     setState(() {
       _error = null;
       _submitting = true;
@@ -56,6 +83,8 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
             phoneNumber: phoneNumber,
             organizationType: _organizationType,
             interestType: _interestType,
+            sponsorshipId:
+                _interestType == 'exhibitor' && _sponsorshipPackageId.isNotEmpty ? _sponsorshipPackageId : null,
             company: _companyController.text.trim().isEmpty ? null : _companyController.text.trim(),
             message: _messageController.text.trim().isEmpty ? null : _messageController.text.trim(),
           );
@@ -152,13 +181,15 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
           DropdownButtonFormField<String>(
             initialValue: _organizationType,
             decoration: const InputDecoration(
-              labelText: 'Organization type *',
+              labelText: 'Organization category *',
               border: OutlineInputBorder(),
             ),
             items: const [
               DropdownMenuItem(value: 'REAL_ESTATE_COMPANY', child: Text('Real estate')),
-              DropdownMenuItem(value: 'CONTRACTOR', child: Text('Contractor')),
+              DropdownMenuItem(value: 'BANK', child: Text('Bank')),
+              DropdownMenuItem(value: 'INSURANCE', child: Text('Insurance')),
               DropdownMenuItem(value: 'DEVELOPER', child: Text('Developer')),
+              DropdownMenuItem(value: 'CONTRACTOR', child: Text('Contractor')),
               DropdownMenuItem(value: 'SUPPLIER', child: Text('Supplier')),
               DropdownMenuItem(value: 'CONSULTANT_ARCHITECT', child: Text('Consultant / Architect')),
               DropdownMenuItem(value: 'FINISHING_CONTRACTOR', child: Text('Finishing contractor')),
@@ -179,9 +210,51 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
               DropdownMenuItem(value: 'visitor', child: Text('Visitor')),
             ],
             onChanged: (v) {
-              if (v != null) setState(() => _interestType = v);
+              if (v != null) {
+                setState(() {
+                  _interestType = v;
+                  if (v != 'exhibitor') _sponsorshipPackageId = '';
+                });
+              }
             },
           ),
+          if (_interestType == 'exhibitor') ...[
+            const SizedBox(height: 16),
+            if (_packagesLoading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8),
+                child: Center(child: SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2))),
+              )
+            else if (_packages.isNotEmpty)
+              DropdownButtonFormField<String>(
+                initialValue: _sponsorshipPackageId.isEmpty ? null : _sponsorshipPackageId,
+                decoration: const InputDecoration(
+                  labelText: 'Sponsorship package *',
+                  border: OutlineInputBorder(),
+                ),
+                hint: const Text('Select a package'),
+                items: _packages
+                    .map((p) {
+                      final id = p['id']?.toString() ?? '';
+                      if (id.isEmpty) return null;
+                      final name = p['name']?.toString() ?? id;
+                      return DropdownMenuItem<String>(value: id, child: Text(name));
+                    })
+                    .whereType<DropdownMenuItem<String>>()
+                    .toList(),
+                onChanged: (v) {
+                  setState(() => _sponsorshipPackageId = v ?? '');
+                },
+              ),
+            if (!_packagesLoading && _packages.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'No active packages available. Please try again later.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.amber.shade200),
+                ),
+              ),
+          ],
           const SizedBox(height: 16),
           TextFormField(
             controller: _companyController,

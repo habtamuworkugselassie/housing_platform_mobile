@@ -216,7 +216,7 @@ class PropertyDetailScreen extends ConsumerWidget {
                   ),
                 ),
                 Text(
-                  property.priceETB > 0 
+                  property.priceETB > 0
                       ? 'ETB ${property.price.toStringAsFixed(0)}'
                       : '\$${property.price.toStringAsFixed(0)}',
                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
@@ -309,12 +309,15 @@ class PropertyDetailScreen extends ConsumerWidget {
                 initialCenter: center,
                 initialZoom: 15,
                 interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.drag | InteractiveFlag.pinchZoom | InteractiveFlag.doubleTapZoom,
+                  flags: InteractiveFlag.drag |
+                      InteractiveFlag.pinchZoom |
+                      InteractiveFlag.doubleTapZoom,
                 ),
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  urlTemplate:
+                      'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
                   userAgentPackageName: 'com.housingplatform.mobile',
                   subdomains: const ['a', 'b', 'c'],
                 ),
@@ -341,7 +344,8 @@ class PropertyDetailScreen extends ConsumerWidget {
           height: 44,
           child: OutlinedButton.icon(
             onPressed: () => _openInMapsForRouting(lat, lng),
-            icon: const Icon(LucideIcons.navigation, size: 20, color: AppTheme.primaryColor),
+            icon: const Icon(LucideIcons.navigation,
+                size: 20, color: AppTheme.primaryColor),
             label: const Text('Navigate'),
             style: OutlinedButton.styleFrom(
               foregroundColor: AppTheme.primaryColor,
@@ -437,26 +441,35 @@ class PropertyDetailScreen extends ConsumerWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    if (property.showVerificationBadge && property.verificationBadgeLabel != null) ...[
+                    if (property.showVerificationBadge &&
+                        property.verificationBadgeLabel != null) ...[
                       const SizedBox(width: 6),
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.verifiedBadgeBlue.withValues(alpha: 0.2),
+                          color:
+                              AppTheme.verifiedBadgeBlue.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: AppTheme.verifiedBadgeBlue.withValues(alpha: 0.5)),
+                          border: Border.all(
+                              color: AppTheme.verifiedBadgeBlue
+                                  .withValues(alpha: 0.5)),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(LucideIcons.badgeCheck, size: 12, color: AppTheme.verifiedBadgeBlue),
+                            const Icon(LucideIcons.badgeCheck,
+                                size: 12, color: AppTheme.verifiedBadgeBlue),
                             const SizedBox(width: 4),
                             Text(
                               property.verificationBadgeLabel!,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: AppTheme.verifiedBadgeBlue,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .labelSmall
+                                  ?.copyWith(
+                                    color: AppTheme.verifiedBadgeBlue,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
                           ],
                         ),
@@ -514,7 +527,8 @@ class PropertyDetailScreen extends ConsumerWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         if (reviewState.isLoading)
-          const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor))
+          const Center(
+              child: CircularProgressIndicator(color: AppTheme.primaryColor))
         else if (reviewState.error != null)
           Text(
             'Failed to load reviews.',
@@ -617,7 +631,8 @@ class PropertyDetailScreen extends ConsumerWidget {
           builder: (context, setState) {
             return AlertDialog(
               backgroundColor: AppTheme.surfaceColor,
-              title: const Text('Write a Review', style: TextStyle(color: AppTheme.textPrimary)),
+              title: const Text('Write a Review',
+                  style: TextStyle(color: AppTheme.textPrimary)),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -660,14 +675,19 @@ class PropertyDetailScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: isSubmitting ? null : () => Navigator.pop(context),
-                  child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+                  child: const Text('Cancel',
+                      style: TextStyle(color: AppTheme.textSecondary)),
                 ),
                 ElevatedButton(
                   onPressed: isSubmitting
                       ? null
                       : () async {
-                          if (commentController.text.isEmpty) return;
-                          
+                          final comment = commentController.text.trim();
+                          if (comment.isEmpty) return;
+
+                          final authState = ref.read(authProvider);
+                          final userId = authState.user?.userId;
+
                           setState(() {
                             isSubmitting = true;
                           });
@@ -675,13 +695,20 @@ class PropertyDetailScreen extends ConsumerWidget {
                           try {
                             await ref
                                 .read(reviewProvider(property.id).notifier)
-                                .submitReview(rating, commentController.text);
-                            
+                                .submitReview(
+                                  rating,
+                                  comment,
+                                  userId: (userId != null && userId.isNotEmpty)
+                                      ? userId
+                                      : null,
+                                );
+
                             if (context.mounted) {
                               Navigator.pop(context);
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Review submitted successfully!'),
+                                  content:
+                                      Text('Review submitted successfully!'),
                                   backgroundColor: AppTheme.success,
                                 ),
                               );
@@ -724,7 +751,7 @@ class PropertyDetailScreen extends ConsumerWidget {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: AppTheme.surfaceColor,
-        border: Border(top: BorderSide(color: AppTheme.borderColor)),
+        border: const Border(top: BorderSide(color: AppTheme.borderColor)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),

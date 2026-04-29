@@ -31,7 +31,7 @@ class ExhibitionInfoSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           Text(
-            'Real Estate & Housing Exhibition',
+            'Ethio Build Connect Expo',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   color: Colors.white,
                   fontWeight: FontWeight.bold,

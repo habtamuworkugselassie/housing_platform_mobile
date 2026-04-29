@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:dio/dio.dart';
 import '../models/user_profile_model.dart';
 import '../network/api_client.dart';
 
@@ -18,6 +20,23 @@ class UserService {
     final response = await _apiClient.put(
       '/users/me',
       data: request.toJson(),
+    );
+    return UserProfile.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// POST /api/v1/users/me/profile-image
+  Future<UserProfile> uploadProfileImage(File file) async {
+    final fileName = file.path.split('/').last;
+    final formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        file.path,
+        filename: fileName,
+      ),
+    });
+
+    final response = await _apiClient.postForm(
+      '/users/me/profile-image',
+      data: formData,
     );
     return UserProfile.fromJson(response.data as Map<String, dynamic>);
   }

@@ -18,7 +18,8 @@ class AuthScreen extends ConsumerStatefulWidget {
   ConsumerState<AuthScreen> createState() => _AuthScreenState();
 }
 
-class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProviderStateMixin {
+class _AuthScreenState extends ConsumerState<AuthScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   // Login
   bool _loginWithEmail = true;
@@ -60,22 +61,28 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
   Future<void> _submitLogin() async {
     final username = _loginWithEmail
         ? _loginEmailController.text.trim()
-        : _loginCountryCode + _loginPhoneController.text.trim().replaceAll(RegExp(r'\s'), '');
+        : _loginCountryCode +
+            _loginPhoneController.text.trim().replaceAll(RegExp(r'\s'), '');
     if (username.isEmpty) {
       ref.read(authProvider.notifier).clearError();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Enter email or phone number'), backgroundColor: AppTheme.error),
+        const SnackBar(
+            content: Text('Enter email or phone number'),
+            backgroundColor: AppTheme.error),
       );
       return;
     }
     final password = _loginPasswordController.text;
     if (password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password is required'), backgroundColor: AppTheme.error),
+        const SnackBar(
+            content: Text('Password is required'),
+            backgroundColor: AppTheme.error),
       );
       return;
     }
-    final success = await ref.read(authProvider.notifier).login(username, password);
+    final success =
+        await ref.read(authProvider.notifier).login(username, password);
     if (success && mounted) {
       Navigator.of(context).pushAndRemoveUntil(
         MaterialPageRoute(builder: (_) => const RootScreen()),
@@ -86,7 +93,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
 
   Future<void> _submitRegister() async {
     final email = _regEmailController.text.trim();
-    final phoneRaw = _regPhoneController.text.trim().replaceAll(RegExp(r'\s'), '');
+    final phoneRaw =
+        _regPhoneController.text.trim().replaceAll(RegExp(r'\s'), '');
     final phoneNumber = phoneRaw.isEmpty ? null : (_regCountryCode + phoneRaw);
     final request = RegistrationRequest(
       firstName: _regFirstNameController.text.trim(),
@@ -98,19 +106,25 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
     );
     if (request.firstName.isEmpty || request.lastName.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('First and last name are required'), backgroundColor: AppTheme.error),
+        const SnackBar(
+            content: Text('First and last name are required'),
+            backgroundColor: AppTheme.error),
       );
       return;
     }
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Valid email is required'), backgroundColor: AppTheme.error),
+        const SnackBar(
+            content: Text('Valid email is required'),
+            backgroundColor: AppTheme.error),
       );
       return;
     }
     if (request.password.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Password must be at least 8 characters'), backgroundColor: AppTheme.error),
+        const SnackBar(
+            content: Text('Password must be at least 8 characters'),
+            backgroundColor: AppTheme.error),
       );
       return;
     }
@@ -140,7 +154,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: const Text('Sign in', style: TextStyle(color: AppTheme.textPrimary)),
+        title: const Text('Sign in',
+            style: TextStyle(color: AppTheme.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
@@ -174,7 +189,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             children: [
               Expanded(
                 child: Material(
-                  color: _loginWithEmail ? AppTheme.primaryColor.withValues(alpha: 0.15) : Colors.transparent,
+                  color: _loginWithEmail
+                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: () => setState(() => _loginWithEmail = true),
@@ -186,7 +203,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
                           'Email',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: _loginWithEmail ? AppTheme.primaryColor : AppTheme.textSecondary,
+                            color: _loginWithEmail
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
                           ),
                         ),
                       ),
@@ -197,7 +216,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
               const SizedBox(width: 8),
               Expanded(
                 child: Material(
-                  color: !_loginWithEmail ? AppTheme.primaryColor.withValues(alpha: 0.15) : Colors.transparent,
+                  color: !_loginWithEmail
+                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
+                      : Colors.transparent,
                   borderRadius: BorderRadius.circular(12),
                   child: InkWell(
                     onTap: () => setState(() => _loginWithEmail = false),
@@ -209,7 +230,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
                           'Phone',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
-                            color: !_loginWithEmail ? AppTheme.primaryColor : AppTheme.textSecondary,
+                            color: !_loginWithEmail
+                                ? AppTheme.primaryColor
+                                : AppTheme.textSecondary,
                           ),
                         ),
                       ),
@@ -225,7 +248,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
               controller: _loginEmailController,
               decoration: const InputDecoration(
                 labelText: 'Email',
-                prefixIcon: Icon(LucideIcons.mail, color: AppTheme.textSecondary),
+                prefixIcon:
+                    Icon(LucideIcons.mail, color: AppTheme.textSecondary),
                 border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.emailAddress,
@@ -235,11 +259,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Phone number', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+                const Text('Phone number',
+                    style:
+                        TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
                 const SizedBox(height: 6),
                 CountryCodePhoneInput(
                   countryCode: _loginCountryCode,
-                  onCountryCodeChanged: (v) => setState(() => _loginCountryCode = v),
+                  onCountryCodeChanged: (v) =>
+                      setState(() => _loginCountryCode = v),
                   phoneController: _loginPhoneController,
                   placeholder: 'Phone number',
                 ),
@@ -251,11 +278,17 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             obscureText: _obscureLoginPassword,
             decoration: InputDecoration(
               labelText: 'Password',
-              prefixIcon: const Icon(LucideIcons.lock, color: AppTheme.textSecondary),
+              prefixIcon:
+                  const Icon(LucideIcons.lock, color: AppTheme.textSecondary),
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
-                icon: Icon(_obscureLoginPassword ? LucideIcons.eyeOff : LucideIcons.eye, color: AppTheme.textSecondary),
-                onPressed: () => setState(() => _obscureLoginPassword = !_obscureLoginPassword),
+                icon: Icon(
+                    _obscureLoginPassword
+                        ? LucideIcons.eyeOff
+                        : LucideIcons.eye,
+                    color: AppTheme.textSecondary),
+                onPressed: () => setState(
+                    () => _obscureLoginPassword = !_obscureLoginPassword),
               ),
             ),
             autofillHints: const [AutofillHints.password],
@@ -264,7 +297,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
           ElevatedButton(
             onPressed: loading ? null : _submitLogin,
             child: loading
-                ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.black))
                 : const Text('Login'),
           ),
         ],
@@ -284,7 +321,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
               Expanded(
                 child: TextFormField(
                   controller: _regFirstNameController,
-                  decoration: const InputDecoration(labelText: 'First name *', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'First name *', border: OutlineInputBorder()),
                   textCapitalization: TextCapitalization.words,
                 ),
               ),
@@ -292,7 +330,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
               Expanded(
                 child: TextFormField(
                   controller: _regLastNameController,
-                  decoration: const InputDecoration(labelText: 'Last name *', border: OutlineInputBorder()),
+                  decoration: const InputDecoration(
+                      labelText: 'Last name *', border: OutlineInputBorder()),
                   textCapitalization: TextCapitalization.words,
                 ),
               ),
@@ -312,11 +351,14 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Phone (optional)', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+              const Text('Phone (optional)',
+                  style:
+                      TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
               const SizedBox(height: 6),
               CountryCodePhoneInput(
                 countryCode: _regCountryCode,
-                onCountryCodeChanged: (v) => setState(() => _regCountryCode = v),
+                onCountryCodeChanged: (v) =>
+                    setState(() => _regCountryCode = v),
                 phoneController: _regPhoneController,
                 placeholder: 'Phone number',
                 validator: (v) {
@@ -338,7 +380,8 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             ),
             items: const [
               DropdownMenuItem(value: 'BUYER', child: Text('Buyer')),
-              DropdownMenuItem(value: 'REALTOR', child: Text('Real Estate Agent')),
+              DropdownMenuItem(
+                  value: 'REALTOR', child: Text('Real Estate Agent')),
               DropdownMenuItem(value: 'BANKER', child: Text('Banker')),
               DropdownMenuItem(value: 'SUPPLIER', child: Text('Supplier')),
             ],
@@ -352,11 +395,15 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
             obscureText: _obscurePassword,
             decoration: InputDecoration(
               labelText: 'Password * (min 8 characters)',
-              prefixIcon: const Icon(LucideIcons.lock, color: AppTheme.textSecondary),
+              prefixIcon:
+                  const Icon(LucideIcons.lock, color: AppTheme.textSecondary),
               border: const OutlineInputBorder(),
               suffixIcon: IconButton(
-                icon: Icon(_obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye, color: AppTheme.textSecondary),
-                onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                icon: Icon(
+                    _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                    color: AppTheme.textSecondary),
+                onPressed: () =>
+                    setState(() => _obscurePassword = !_obscurePassword),
               ),
             ),
             validator: (v) {
@@ -369,7 +416,11 @@ class _AuthScreenState extends ConsumerState<AuthScreen> with SingleTickerProvid
           ElevatedButton(
             onPressed: loading ? null : _submitRegister,
             child: loading
-                ? const SizedBox(height: 22, width: 22, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 22,
+                    width: 22,
+                    child: CircularProgressIndicator(
+                        strokeWidth: 2, color: Colors.black))
                 : const Text('Create account'),
           ),
         ],
