@@ -1,0 +1,7 @@
+<!-- Release builds: HTTPS-only; debug/profile keep cleartext from main manifest for local dev. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <application
+        android:usesCleartextTraffic="false"
+        tools:replace="android:usesCleartextTraffic" />
+</manifest>

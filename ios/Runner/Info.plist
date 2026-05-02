@@ -68,5 +68,13 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSCameraUsageDescription</key>
+	<string>Ethio Build Connect needs camera access to take photos for your property listings.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Ethio Build Connect needs photo library access so you can choose images for your listings.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Ethio Build Connect may save images you choose when you share or upload listing photos.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Ethio Build Connect needs microphone access when you record video for listings.</string>
 </dict>
 </plist>
