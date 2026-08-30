@@ -47,3 +47,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Signing secrets — never commit these
+android/key.properties
+**/*.jks
+**/*.keystore
+ios/Runner/GoogleService-Info.plist.local
+**/*.mobileprovision
+**/*.p12
