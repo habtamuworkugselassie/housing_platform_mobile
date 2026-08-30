@@ -75,6 +75,9 @@
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Ethio Build Connect may save images you choose when you share or upload listing photos.</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Ethio Build Connect needs microphone access when you record video for listings.</string>
+	<string>Ethio Build Connect uses the microphone so you can broadcast live audio from the exhibition and record video for listings.</string>
+	<!-- App uses only standard encryption (HTTPS/TLS, WebRTC DTLS-SRTP); declare export-compliance exemption so submission doesn't prompt each time. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
