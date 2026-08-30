@@ -42,6 +42,16 @@ class AuthResponse {
   }
 
   String get fullName => '$firstName $lastName'.trim();
+
+  /// True for platform staff (admin / super-admin), by role or scope.
+  bool get isAdmin {
+    bool matches(String v) {
+      final u = v.toUpperCase();
+      return u == 'ADMIN' || u == 'SUPER_ADMIN';
+    }
+
+    return roles.any(matches) || scopes.any(matches);
+  }
 }
 
 class LoginRequest {

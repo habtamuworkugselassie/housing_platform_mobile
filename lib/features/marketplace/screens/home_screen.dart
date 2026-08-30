@@ -118,6 +118,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SponsorCarouselWidget(height: 220, autoplaySeconds: 5),
                 const SizedBox(height: 24),
                 const ExhibitionInfoSection(),
+                const SizedBox(height: 16),
+                _buildLiveBanner(context),
                 const SizedBox(height: 24),
                 CategorySelector(
                   categories: categories,
@@ -179,6 +181,65 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
+  Widget _buildLiveBanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () => ref.read(rootTabIndexProvider.notifier).state = 3,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B1D5E), Color(0xFF241A4A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.error,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.radio, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text('LIVE',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Live from the exhibition',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            )),
+                    const SizedBox(height: 2),
+                    const Text('Watch live streams, or go live from your booth.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(LucideIcons.chevronRight, color: Colors.white70),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
@@ -221,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           if (ref.watch(authProvider).isAuthenticated)
             GestureDetector(
-              onTap: () => ref.read(rootTabIndexProvider.notifier).state = 4,
+              onTap: () => ref.read(rootTabIndexProvider.notifier).state = 5,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
@@ -234,7 +295,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     (ref.watch(authProvider).user?.firstName ?? 'U').isNotEmpty
                         ? (ref.watch(authProvider).user!.firstName[0].toUpperCase())
                         : 'U',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
               ),
@@ -298,7 +359,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: IconButton(
-              icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.black),
+              icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.white),
               onPressed: _showFilterBottomSheet,
             ),
           ),

@@ -301,7 +301,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black))
+                        strokeWidth: 2, color: Colors.white))
                 : const Text('Login'),
           ),
         ],
@@ -420,7 +420,7 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                     height: 22,
                     width: 22,
                     child: CircularProgressIndicator(
-                        strokeWidth: 2, color: Colors.black))
+                        strokeWidth: 2, color: Colors.white))
                 : const Text('Create account'),
           ),
         ],

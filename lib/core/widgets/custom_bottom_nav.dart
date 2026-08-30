@@ -22,7 +22,7 @@ class CustomBottomNavBar extends StatelessWidget {
         border: Border(top: BorderSide(color: AppTheme.borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -77,6 +77,17 @@ class CustomBottomNavBar extends StatelessWidget {
                   child: Icon(LucideIcons.messageCircle),
                 ),
                 label: 'Enquiry',
+              ),
+              const BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Icon(LucideIcons.radio),
+                ),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Icon(LucideIcons.radio),
+                ),
+                label: 'Live',
               ),
               if (isAuthenticated)
                 const BottomNavigationBarItem(
