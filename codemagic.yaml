@@ -85,7 +85,11 @@ workflows:
         script: flutter pub get
       - name: Build AAB
         script: |
+          # --android-skip-build-dependency-validation: the project pins AGP 8.9.1,
+          # which the very newest Flutter flags as below its preferred minimum; the
+          # combination builds fine, so bypass the version gate.
           flutter build appbundle --release \
+            --android-skip-build-dependency-validation \
             --build-name=1.0.0 \
             --dart-define=API_BASE_URL="$API_BASE_URL"
     artifacts:

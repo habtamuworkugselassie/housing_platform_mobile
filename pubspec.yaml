@@ -31,7 +31,7 @@ dependencies:
     sdk: flutter
 
 
-  lucide_icons: ^0.257.0
+  lucide_icons_flutter: ^3.1.17
   dio: ^5.4.3+1
   flutter_riverpod: ^2.6.1
   flutter_secure_storage: ^9.2.4
@@ -41,12 +41,12 @@ dependencies:
   latlong2: ^0.9.1
   url_launcher: ^6.2.5
   cached_network_image: ^3.3.1
-  share_plus: ^9.0.0
+  share_plus: ^12.0.2
   image_picker: ^1.1.1
 
   # Live video broadcasting (self-hosted LiveKit SFU) + runtime camera/mic permissions.
-  livekit_client: ^2.0.0
-  flutter_webrtc: ^0.11.6
+  livekit_client: ^2.11.0
+  flutter_webrtc: ^1.6.0
   permission_handler: ^11.0.0
 
 dev_dependencies:
