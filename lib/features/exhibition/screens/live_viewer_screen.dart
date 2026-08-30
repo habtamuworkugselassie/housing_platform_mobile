@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:livekit_client/livekit_client.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
@@ -154,7 +155,8 @@ class _LiveViewerScreenState extends ConsumerState<LiveViewerScreen> {
       );
     }
     if (_remoteVideo != null) {
-      return VideoTrackRenderer(_remoteVideo!, fit: VideoViewFit.contain);
+      return VideoTrackRenderer(_remoteVideo!,
+          fit: webrtc.RTCVideoViewObjectFit.RTCVideoViewObjectFitContain);
     }
     return const Column(
       mainAxisSize: MainAxisSize.min,

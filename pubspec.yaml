@@ -46,6 +46,7 @@ dependencies:
 
   # Live video broadcasting (self-hosted LiveKit SFU) + runtime camera/mic permissions.
   livekit_client: ^2.0.0
+  flutter_webrtc: ^0.11.6
   permission_handler: ^11.0.0
 
 dev_dependencies:
