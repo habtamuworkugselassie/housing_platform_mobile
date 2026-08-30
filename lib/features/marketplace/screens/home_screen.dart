@@ -13,7 +13,6 @@ import '../screens/marketplace_screen.dart';
 import '../../property/screens/property_detail_screen.dart';
 import '../../auth/screens/auth_screen.dart';
 import '../../exhibition/widgets/exhibition_info_section.dart';
-import '../../exhibition/screens/live_broadcasts_screen.dart';
 
 import '../../../core/providers/auth_provider.dart';
 
@@ -187,12 +186,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const LiveBroadcastsScreen()),
-          );
-        },
+        onTap: () => ref.read(rootTabIndexProvider.notifier).state = 3,
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
@@ -288,7 +282,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
           if (ref.watch(authProvider).isAuthenticated)
             GestureDetector(
-              onTap: () => ref.read(rootTabIndexProvider.notifier).state = 4,
+              onTap: () => ref.read(rootTabIndexProvider.notifier).state = 5,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,

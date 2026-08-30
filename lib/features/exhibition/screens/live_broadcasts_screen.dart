@@ -11,7 +11,10 @@ import 'live_viewer_screen.dart';
 
 /// Public wall of currently-live streams, with a shortcut to start your own.
 class LiveBroadcastsScreen extends ConsumerStatefulWidget {
-  const LiveBroadcastsScreen({Key? key}) : super(key: key);
+  /// Hidden when the screen is used as a root bottom-nav tab.
+  final bool showBackButton;
+
+  const LiveBroadcastsScreen({Key? key, this.showBackButton = true}) : super(key: key);
 
   @override
   ConsumerState<LiveBroadcastsScreen> createState() => _LiveBroadcastsScreenState();
@@ -58,7 +61,8 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
-        leading: const CustomBackButton(),
+        leading: widget.showBackButton ? const CustomBackButton() : null,
+        automaticallyImplyLeading: widget.showBackButton,
         title: const Text('Live now'),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
         elevation: 0,

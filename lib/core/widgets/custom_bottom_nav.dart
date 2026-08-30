@@ -78,6 +78,17 @@ class CustomBottomNavBar extends StatelessWidget {
                 ),
                 label: 'Enquiry',
               ),
+              const BottomNavigationBarItem(
+                icon: Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Icon(LucideIcons.radio),
+                ),
+                activeIcon: Padding(
+                  padding: EdgeInsets.only(bottom: 4),
+                  child: Icon(LucideIcons.radio),
+                ),
+                label: 'Live',
+              ),
               if (isAuthenticated)
                 const BottomNavigationBarItem(
                   icon: Padding(
