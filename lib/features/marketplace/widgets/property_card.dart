@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/models/property_model.dart';
 import '../../../../core/theme/theme.dart';
 import '../../../../core/widgets/property_image.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 class PropertyCard extends StatelessWidget {
   final PropertyModel property;

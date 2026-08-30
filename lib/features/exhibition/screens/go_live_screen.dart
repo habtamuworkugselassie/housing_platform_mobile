@@ -2,9 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_webrtc/flutter_webrtc.dart' as webrtc;
 import 'package:livekit_client/livekit_client.dart';
-import 'package:lucide_icons/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/models/live_broadcast_model.dart';
@@ -324,8 +323,7 @@ class _GoLiveScreenState extends ConsumerState<GoLiveScreen> {
           children: [
             Container(color: Colors.black),
             if (_videoTrack != null)
-              VideoTrackRenderer(_videoTrack!,
-                  fit: webrtc.RTCVideoViewObjectFit.RTCVideoViewObjectFitCover)
+              VideoTrackRenderer(_videoTrack!, fit: VideoViewFit.cover)
             else
               const Center(
                 child: Icon(LucideIcons.video, color: Colors.white24, size: 48),

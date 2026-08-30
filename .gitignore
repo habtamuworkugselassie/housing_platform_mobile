@@ -55,3 +55,6 @@ android/key.properties
 ios/Runner/GoogleService-Info.plist.local
 **/*.mobileprovision
 **/*.p12
+
+# Android module build output
+android/build/
