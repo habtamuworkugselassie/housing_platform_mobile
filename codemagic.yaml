@@ -1,0 +1,98 @@
+# Codemagic CI/CD — build the app on a cloud Mac and ship to TestFlight
+# (and, optionally, Google Play internal testing) without owning a Mac.
+#
+# ── ONE-TIME SETUP in the Codemagic UI (see docs/CODEMAGIC_TESTFLIGHT.md) ──
+#  1. Sign up at codemagic.io and add this GitHub repo.
+#  2. Apple: create an App Store Connect API key (App Store Connect → Users and
+#     Access → Integrations → App Store Connect API). In Codemagic, add it under
+#     Teams/App settings → Integrations → App Store Connect, and name it exactly
+#     "AppStoreConnect" (matches `integrations.app_store_connect` below).
+#  3. Create the app record in App Store Connect with bundle id
+#     com.ethiobuildconnect.housingplatformapp, and note its Apple ID (the numeric
+#     "App Apple ID"); put it in the APP_APPLE_ID variable below.
+#  4. Set API_BASE_URL below to your backend (HTTPS for real use; the current
+#     cleartext HTTP works for TestFlight because of the temporary ATS exception
+#     in ios/Runner/Info.plist).
+#  5. (Android) To also push to Play internal testing, create a Google Play
+#     service-account JSON, add it to Codemagic as GCLOUD_SERVICE_ACCOUNT_CREDENTIALS,
+#     and configure Android signing (keystore) in the Codemagic UI as a group.
+
+workflows:
+  # ───────────────────────────── iOS → TestFlight ─────────────────────────────
+  ios-testflight:
+    name: iOS – TestFlight
+    max_build_duration: 60
+    instance_type: mac_mini_m2
+    integrations:
+      app_store_connect: AppStoreConnect
+    environment:
+      ios_signing:
+        distribution_type: app_store
+        bundle_identifier: com.ethiobuildconnect.housingplatformapp
+      vars:
+        BUNDLE_ID: "com.ethiobuildconnect.housingplatformapp"
+        APP_APPLE_ID: "0000000000"          # ← replace with your App Store Connect numeric app id
+        API_BASE_URL: "http://209.38.204.219:8080/api/v1"  # ← switch to https://... for production
+      flutter: stable
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - name: Apply signing profiles fetched by Codemagic
+        script: xcode-project use-profiles
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Install CocoaPods
+        script: find . -name "Podfile" -execdir pod install \;
+      - name: Build IPA
+        script: |
+          # Auto-increment the build number from the latest one on TestFlight.
+          BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_APPLE_ID") + 1))
+          flutter build ipa --release \
+            --build-name=1.0.0 \
+            --build-number=$BUILD_NUMBER \
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --export-options-plist=/Users/builder/export_options.plist
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        # Internal testers get the build with no review. To auto-add external
+        # tester groups (which need Apple's light beta review), list them here:
+        # beta_groups:
+        #   - "Ethio Build Connect Testers"
+
+  # ─────────────────── Android → Google Play internal testing ─────────────────
+  # Optional. Requires: Android signing group configured in Codemagic UI, and a
+  # Google Play service-account JSON in GCLOUD_SERVICE_ACCOUNT_CREDENTIALS.
+  android-internal:
+    name: Android – Play internal
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - ethiobuildconnect_keystore   # ← name of the keystore group you add in Codemagic
+      groups:
+        - google_play                  # ← group holding GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+      vars:
+        API_BASE_URL: "http://209.38.204.219:8080/api/v1"  # ← https://... for production
+      flutter: stable
+    scripts:
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Build AAB
+        script: |
+          flutter build appbundle --release \
+            --build-name=1.0.0 \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+    artifacts:
+      - build/**/outputs/bundle/**/*.aab
+      - build/**/outputs/**/mapping.txt
+    publishing:
+      google_play:
+        credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
+        track: internal
+        submit_as_draft: false
