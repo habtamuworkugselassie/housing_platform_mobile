@@ -48,7 +48,8 @@ android {
 
     defaultConfig {
         applicationId "com.ethio_properties.housing_platform_mobile"
-        minSdkVersion flutter.minSdkVersion
+        // LiveKit / flutter_webrtc requires API 21+. Keep whichever is higher.
+        minSdkVersion Math.max(flutter.minSdkVersion, 21)
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

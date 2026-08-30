@@ -9,6 +9,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/sponsorship_service.dart';
 import '../services/organization_service.dart';
 import '../services/exhibition_service.dart';
+import '../services/live_service.dart';
 
 // Global singletons
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
@@ -27,6 +28,10 @@ final organizationServiceProvider = Provider<OrganizationService>((ref) {
 
 final exhibitionServiceProvider = Provider<ExhibitionService>((ref) {
   return ExhibitionService(ref.read(apiClientProvider));
+});
+
+final liveServiceProvider = Provider<LiveService>((ref) {
+  return LiveService(ref.read(apiClientProvider));
 });
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());

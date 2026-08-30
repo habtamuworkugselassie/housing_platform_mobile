@@ -13,6 +13,7 @@ import '../screens/marketplace_screen.dart';
 import '../../property/screens/property_detail_screen.dart';
 import '../../auth/screens/auth_screen.dart';
 import '../../exhibition/widgets/exhibition_info_section.dart';
+import '../../exhibition/screens/live_broadcasts_screen.dart';
 
 import '../../../core/providers/auth_provider.dart';
 
@@ -118,6 +119,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SponsorCarouselWidget(height: 220, autoplaySeconds: 5),
                 const SizedBox(height: 24),
                 const ExhibitionInfoSection(),
+                const SizedBox(height: 16),
+                _buildLiveBanner(context),
                 const SizedBox(height: 24),
                 CategorySelector(
                   categories: categories,
@@ -173,6 +176,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 const SizedBox(height: 24), // Bottom padding
               ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLiveBanner(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const LiveBroadcastsScreen()),
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.borderColor),
+            gradient: const LinearGradient(
+              colors: [Color(0xFF3B1D5E), Color(0xFF241A4A)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppTheme.error,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(LucideIcons.radio, color: Colors.white, size: 14),
+                    SizedBox(width: 6),
+                    Text('LIVE',
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Live from the exhibition',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            )),
+                    const SizedBox(height: 2),
+                    const Text('Watch live streams, or go live from your booth.',
+                        style: TextStyle(color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(LucideIcons.chevronRight, color: Colors.white70),
+            ],
           ),
         ),
       ),
