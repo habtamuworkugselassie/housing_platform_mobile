@@ -264,7 +264,7 @@ class _SlidePageState extends State<_SlidePage> {
                   style: const TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.w600,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
               ),

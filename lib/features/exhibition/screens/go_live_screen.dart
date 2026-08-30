@@ -444,7 +444,7 @@ class _GoLiveScreenState extends ConsumerState<GoLiveScreen> {
               onPressed: _busy ? null : _requestGoLive,
               icon: _busy
                   ? const SizedBox(
-                      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                      width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                   : const Icon(LucideIcons.radio, size: 18),
               label: const Text('Request to go live'),
             ),
@@ -565,6 +565,6 @@ class _GoLiveScreenState extends ConsumerState<GoLiveScreen> {
 
   Widget _hint(String text) => Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: Text(text, style: TextStyle(fontSize: 12, color: Colors.amber.shade200)),
+        child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFFB45309))),
       );
 }

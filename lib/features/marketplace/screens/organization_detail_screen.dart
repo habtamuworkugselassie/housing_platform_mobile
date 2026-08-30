@@ -442,7 +442,7 @@ class _SocialUrlChip extends StatelessWidget {
       onPressed: () => launchUrl(uri, mode: LaunchMode.externalApplication),
       style: OutlinedButton.styleFrom(
         foregroundColor: AppTheme.textPrimary,
-        side: BorderSide(color: Colors.white.withOpacity(0.2)),
+        side: const BorderSide(color: AppTheme.borderColor),
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,

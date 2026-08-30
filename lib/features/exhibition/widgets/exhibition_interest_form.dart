@@ -119,7 +119,7 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
             Text(
               'Thank you for your interest',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.green.shade200,
+                    color: AppTheme.success,
                     fontWeight: FontWeight.w600,
                   ),
               textAlign: TextAlign.center,
@@ -127,7 +127,7 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
             const SizedBox(height: 8),
             Text(
               'We will get in touch with you soon.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
               textAlign: TextAlign.center,
             ),
           ],
@@ -139,9 +139,9 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: AppTheme.surfaceColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        border: Border.all(color: AppTheme.borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,14 +149,14 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
           Text(
             'Register your interest',
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
+                  color: AppTheme.textPrimary,
                   fontWeight: FontWeight.bold,
                 ),
           ),
           const SizedBox(height: 8),
           Text(
             'Exhibitor or visitor — we\'ll contact you.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
           ),
           const SizedBox(height: 20),
           TextFormField(
@@ -251,7 +251,7 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
                 padding: const EdgeInsets.only(top: 8),
                 child: Text(
                   'No active packages available. Please try again later.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.amber.shade200),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFFB45309)),
                 ),
               ),
           ],

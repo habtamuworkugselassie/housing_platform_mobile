@@ -116,7 +116,7 @@ class _LiveViewerScreenState extends ConsumerState<LiveViewerScreen> {
             Container(
               width: double.infinity,
               padding: const EdgeInsets.all(16),
-              color: AppTheme.surfaceColor,
+              color: const Color(0xFF18181B),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -125,7 +125,7 @@ class _LiveViewerScreenState extends ConsumerState<LiveViewerScreen> {
                   const SizedBox(height: 4),
                   Text(
                     [b.broadcasterName, if (b.companyName != null) b.companyName].join(' · '),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                    style: const TextStyle(color: Colors.white70, fontSize: 13),
                   ),
                 ],
               ),

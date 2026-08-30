@@ -138,10 +138,10 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: Colors.black26,
+                color: AppTheme.surfaceMuted,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(LucideIcons.playCircle, color: Colors.white70),
+              child: const Icon(LucideIcons.playCircle, color: AppTheme.primaryColor),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -170,7 +170,7 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
                   Text(b.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 2),
                   Text(
                     [b.broadcasterName, if (b.companyName != null) b.companyName].join(' · '),
@@ -206,11 +206,11 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: Colors.white24),
+            Icon(icon, size: 56, color: AppTheme.textMuted),
             const SizedBox(height: 16),
             Text(title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w600)),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
             const SizedBox(height: 8),
             Text(subtitle,
                 textAlign: TextAlign.center,

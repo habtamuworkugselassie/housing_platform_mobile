@@ -119,7 +119,7 @@ class _ProfileContent extends ConsumerWidget {
               },
               style: FilledButton.styleFrom(
                 backgroundColor: AppTheme.primaryColor,
-                foregroundColor: Colors.black,
+                foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text('Edit Profile'),
@@ -243,7 +243,7 @@ class _ProfileHeader extends ConsumerWidget {
                   backgroundImage: imageUrl != null && imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
                   child: imageUrl == null || imageUrl.isEmpty ? Text(
                     initial,
-                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.black),
+                    style: const TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.white),
                   ) : null,
                 ),
                 Positioned(

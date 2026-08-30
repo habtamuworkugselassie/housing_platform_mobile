@@ -295,7 +295,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     (ref.watch(authProvider).user?.firstName ?? 'U').isNotEmpty
                         ? (ref.watch(authProvider).user!.firstName[0].toUpperCase())
                         : 'U',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black),
+                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                   ),
                 ),
               ),
@@ -359,7 +359,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               borderRadius: BorderRadius.circular(16),
             ),
             child: IconButton(
-              icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.black),
+              icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.white),
               onPressed: _showFilterBottomSheet,
             ),
           ),

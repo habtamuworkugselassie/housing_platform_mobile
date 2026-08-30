@@ -1,22 +1,29 @@
 import 'package:flutter/material.dart';
 
+/// Light brand theme, aligned with the web portal:
+/// violet (#7C3AED) primary on light surfaces, dark text, gold accent.
 class AppTheme {
-  // Brand / Accent aligned with white-on-purple style.
-  static const Color primaryColor = Color(0xFFFFFFFF);
-  static const Color primaryColorLight = Color(0xFFF4F4F5);
-  static const Color primaryColorDark = Color(0xFFE4E4E7);
+  // Brand / accent (violet-600 family, matches web `primary`).
+  static const Color primaryColor = Color(0xFF7C3AED); // violet-600
+  static const Color primaryColorLight = Color(0xFFA78BFA); // violet-400
+  static const Color primaryColorDark = Color(0xFF6D28D9); // violet-700
 
-  // Backgrounds & Surfaces swapped to purple family
-  static const Color scaffoldBackgroundColor = Color(0xFF1A1336);
-  static const Color surfaceColor = Color(0xFF241A4A);
-  static const Color borderColor = Color(0x1AFFFFFF); // white/10
+  /// Brand gold accent (web `gold`).
+  static const Color gold = Color(0xFFD99F3F);
 
-  // Text Colors (frontend: white, gray-400)
-  static const Color textPrimary = Color(0xFFFFFFFF); // white
-  static const Color textSecondary = Color(0xFF9CA3AF); // gray-400
-  static const Color textLight = Colors.white;
+  // Backgrounds & surfaces (light).
+  static const Color scaffoldBackgroundColor = Color(0xFFF7F7FB); // light violet-tinted
+  static const Color surfaceColor = Color(0xFFFFFFFF); // white cards
+  static const Color surfaceMuted = Color(0xFFF5F3FF); // violet-50 sections
+  static const Color borderColor = Color(0xFFE5E7EB); // gray-200
 
-  // Status Colors
+  // Text colors.
+  static const Color textPrimary = Color(0xFF111827); // gray-900
+  static const Color textSecondary = Color(0xFF6B7280); // gray-500
+  static const Color textMuted = Color(0xFF9CA3AF); // gray-400
+  static const Color textLight = Color(0xFFFFFFFF); // on primary / dark surfaces
+
+  // Status colors.
   static const Color success = Color(0xFF10B981);
   static const Color error = Color(0xFFEF4444);
 
@@ -27,10 +34,11 @@ class AppTheme {
     return ThemeData(
       useMaterial3: true,
       scaffoldBackgroundColor: scaffoldBackgroundColor,
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
-        onPrimary: Colors.black,
-        secondary: primaryColorLight,
+        onPrimary: Colors.white,
+        secondary: primaryColorDark,
+        onSecondary: Colors.white,
         surface: surfaceColor,
         onSurface: textPrimary,
       ),
@@ -56,17 +64,19 @@ class AppTheme {
       // Component Themes
       cardTheme: CardThemeData(
         color: surfaceColor,
-        elevation: 2,
-        shadowColor: Colors.black.withAlpha(((0.05) * 255).toInt()),
+        elevation: 1,
+        shadowColor: Colors.black.withAlpha(((0.06) * 255).toInt()),
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: borderColor),
         ),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: primaryColor,
-          foregroundColor: Colors.black,
+          foregroundColor: Colors.white,
           elevation: 0,
           padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
           shape: RoundedRectangleBorder(
@@ -88,9 +98,16 @@ class AppTheme {
         ),
       ),
 
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(foregroundColor: primaryColor),
+      ),
+
       appBarTheme: const AppBarTheme(
-        backgroundColor: scaffoldBackgroundColor,
+        backgroundColor: surfaceColor,
+        foregroundColor: textPrimary,
         elevation: 0,
+        scrolledUnderElevation: 0.5,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         iconTheme: IconThemeData(color: textPrimary),
         titleTextStyle: TextStyle(
@@ -98,7 +115,7 @@ class AppTheme {
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.white.withValues(alpha: 0.05),
+        fillColor: Colors.white,
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -109,7 +126,7 @@ class AppTheme {
           borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         labelStyle: const TextStyle(color: textSecondary),
-        hintStyle: const TextStyle(color: textSecondary),
+        hintStyle: const TextStyle(color: textMuted),
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(

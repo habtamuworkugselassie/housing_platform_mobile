@@ -60,7 +60,7 @@ class _CategorySelectorState extends State<CategorySelector> {
               child: Text(
                 widget.categories[index],
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: isSelected ? Colors.black : AppTheme.textPrimary,
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),

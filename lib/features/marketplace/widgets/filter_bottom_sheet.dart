@@ -157,7 +157,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     selectedColor: AppTheme.primaryColor,
                     backgroundColor: AppTheme.surfaceColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : AppTheme.textPrimary,
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     shape: RoundedRectangleBorder(
@@ -199,7 +199,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     selectedColor: AppTheme.primaryColor,
                     backgroundColor: AppTheme.surfaceColor,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : AppTheme.textPrimary,
+                      color: isSelected ? Colors.white : AppTheme.textPrimary,
                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                     shape: RoundedRectangleBorder(

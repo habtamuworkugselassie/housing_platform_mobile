@@ -75,7 +75,7 @@ class PropertyDetailScreen extends ConsumerWidget {
             border: Border.all(color: AppTheme.borderColor),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
+                color: Colors.black.withValues(alpha: 0.06),
                 blurRadius: 4,
               ),
             ],
@@ -97,7 +97,7 @@ class PropertyDetailScreen extends ConsumerWidget {
               border: Border.all(color: AppTheme.borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 4,
                 ),
               ],
@@ -120,7 +120,7 @@ class PropertyDetailScreen extends ConsumerWidget {
               border: Border.all(color: AppTheme.borderColor),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.3),
+                  color: Colors.black.withValues(alpha: 0.06),
                   blurRadius: 4,
                 ),
               ],
@@ -182,7 +182,7 @@ class PropertyDetailScreen extends ConsumerWidget {
               child: Text(
                 property.type,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: Colors.black,
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                     ),
               ),
@@ -733,7 +733,7 @@ class PropertyDetailScreen extends ConsumerWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.black,
+                            color: Colors.white,
                           ),
                         )
                       : const Text('Submit'),
@@ -754,7 +754,7 @@ class PropertyDetailScreen extends ConsumerWidget {
         border: const Border(top: BorderSide(color: AppTheme.borderColor)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
+            color: Colors.black.withValues(alpha: 0.06),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -789,7 +789,7 @@ class PropertyDetailScreen extends ConsumerWidget {
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.black,
+                  foregroundColor: Colors.white,
                 ),
                 child: const Text('Book a Tour'),
               ),
