@@ -10,9 +10,7 @@
 #  3. Create the app record in App Store Connect with bundle id
 #     com.ethiobuildconnect.housingplatformapp, and note its Apple ID (the numeric
 #     "App Apple ID"); put it in the APP_APPLE_ID variable below.
-#  4. Set API_BASE_URL below to your backend (HTTPS for real use; the current
-#     cleartext HTTP works for TestFlight because of the temporary ATS exception
-#     in ios/Runner/Info.plist).
+#  4. API_BASE_URL below points at the production HTTPS API.
 #  5. (Android) To also push to Play internal testing, create a Google Play
 #     service-account JSON, add it to Codemagic as GCLOUD_SERVICE_ACCOUNT_CREDENTIALS,
 #     and configure Android signing (keystore) in the Codemagic UI as a group.
@@ -32,7 +30,7 @@ workflows:
       vars:
         BUNDLE_ID: "com.ethiobuildconnect.housingplatformapp"
         APP_APPLE_ID: "0000000000"          # ← replace with your App Store Connect numeric app id
-        API_BASE_URL: "http://209.38.204.219:8080/api/v1"  # ← switch to https://... for production
+        API_BASE_URL: "https://ethiobuildconnect.et/api/v1"  # production API
       flutter: stable
       xcode: latest
       cocoapods: default
@@ -78,7 +76,7 @@ workflows:
       groups:
         - google_play                  # ← group holding GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
       vars:
-        API_BASE_URL: "http://209.38.204.219:8080/api/v1"  # ← https://... for production
+        API_BASE_URL: "https://ethiobuildconnect.et/api/v1"  # production API
       flutter: stable
     scripts:
       - name: Flutter packages

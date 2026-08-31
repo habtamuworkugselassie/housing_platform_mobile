@@ -13,7 +13,7 @@ class ApiConfig {
   /// Full API base URL (e.g. http://localhost:8080/api/v1 or http://DROPLET_IP:8080/api/v1).
   static const String baseUrl = String.fromEnvironment(
     'API_BASE_URL',
-    defaultValue: 'http://209.38.204.219:8080/api/v1',
+    defaultValue: 'https://ethiobuildconnect.et/api/v1',
   );
 
   /// Origin only (e.g. http://localhost:8080) for building media URLs (property images, etc.).
