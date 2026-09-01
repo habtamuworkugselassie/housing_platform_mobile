@@ -135,6 +135,15 @@ class _ProfileContent extends ConsumerWidget {
             ),
             child: const Text('Logout'),
           ),
+          const SizedBox(height: 12),
+          TextButton(
+            onPressed: () => _handleDeleteAccount(context, ref),
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.error,
+              padding: const EdgeInsets.symmetric(vertical: 12),
+            ),
+            child: const Text('Delete my account'),
+          ),
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -178,6 +187,48 @@ class _ProfileContent extends ConsumerWidget {
       await ref.read(authProvider.notifier).logout();
       if (context.mounted) {
         ref.read(rootTabIndexProvider.notifier).state = 0;
+      }
+    }
+  }
+
+  Future<void> _handleDeleteAccount(BuildContext context, WidgetRef ref) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppTheme.surfaceColor,
+        title: const Text('Delete account', style: TextStyle(color: AppTheme.textPrimary)),
+        content: const Text(
+          'This permanently deletes your account and personal data, and cannot be undone. Continue?',
+          style: TextStyle(color: AppTheme.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel', style: TextStyle(color: AppTheme.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: AppTheme.error)),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+    try {
+      await ref.read(userServiceProvider).deleteAccount();
+      await ref.read(authProvider.notifier).logout();
+      if (context.mounted) {
+        ref.read(rootTabIndexProvider.notifier).state = 0;
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Could not delete your account: ${e.toString().replaceFirst('Exception: ', '')}',
+            ),
+          ),
+        );
       }
     }
   }
