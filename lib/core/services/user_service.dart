@@ -40,4 +40,9 @@ class UserService {
     );
     return UserProfile.fromJson(response.data as Map<String, dynamic>);
   }
+
+  /// DELETE /users/me — permanently delete the signed-in user's account (irreversible).
+  Future<void> deleteAccount() async {
+    await _apiClient.delete('/users/me');
+  }
 }
