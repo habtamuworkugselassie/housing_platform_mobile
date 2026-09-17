@@ -10,6 +10,7 @@ import '../services/sponsorship_service.dart';
 import '../services/organization_service.dart';
 import '../services/exhibition_service.dart';
 import '../services/live_service.dart';
+import '../services/google_auth_gateway.dart';
 
 // Global singletons
 final apiClientProvider = Provider<ApiClient>((ref) => ApiClient());
@@ -33,6 +34,9 @@ final exhibitionServiceProvider = Provider<ExhibitionService>((ref) {
 final liveServiceProvider = Provider<LiveService>((ref) {
   return LiveService(ref.read(apiClientProvider));
 });
+
+/// Obtains Google ID tokens on the device; override in tests.
+final googleAuthGatewayProvider = Provider<GoogleAuthGateway>((ref) => GoogleAuthGateway());
 
 final secureStorageProvider = Provider<FlutterSecureStorage>((ref) => const FlutterSecureStorage());
 
@@ -148,6 +152,33 @@ class AuthNotifier extends StateNotifier<AuthState> {
     } catch (e) {
       state = state.copyWith(isLoading: false, error: e.toString());
       return false;
+    }
+  }
+
+  /// Minimal sign-up from the purchase flow. Throws on failure so the caller can show the
+  /// server's message (409 when the phone or email already has an account).
+  Future<AuthResponse> quickRegister(QuickRegistrationRequest request) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final user = await _authService.quickRegister(request);
+      state = state.copyWith(isLoading: false, user: user);
+      return user;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
+    }
+  }
+
+  /// Exchanges a Google ID token for platform tokens.
+  Future<AuthResponse> loginWithGoogle(String idToken) async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final user = await _authService.loginWithGoogle(idToken);
+      state = state.copyWith(isLoading: false, user: user);
+      return user;
+    } catch (e) {
+      state = state.copyWith(isLoading: false, error: e.toString());
+      rethrow;
     }
   }
 

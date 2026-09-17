@@ -51,6 +51,8 @@ class PropertyModel {
   final String description;
   final String type; // RESIDENTIAL, COMMERCIAL, etc
   final String status; // AVAILABLE, SOLD
+  final String? category; // FOR_SALE, FOR_RENTAL
+  final String? unitNumber;
   final double priceETB;
   final double priceUSD;
   final String address;
@@ -82,6 +84,8 @@ class PropertyModel {
     required this.description,
     required this.type,
     required this.status,
+    this.category,
+    this.unitNumber,
     required this.priceETB,
     required this.priceUSD,
     required this.address,
@@ -127,6 +131,10 @@ class PropertyModel {
       description: json['description'] as String? ?? '',
       type: json['type'] as String? ?? 'RESIDENTIAL',
       status: json['status'] as String? ?? 'AVAILABLE',
+
+      category: json['category'] as String?,
+
+      unitNumber: json['unitNumber'] as String?,
       priceETB: (json['priceETB'] as num?)?.toDouble() ?? 0.0,
       priceUSD: (json['priceUSD'] as num?)?.toDouble() ?? 0.0,
       address: json['address'] as String? ?? '',
@@ -179,4 +187,10 @@ class PropertyModel {
     final primary = images.firstWhere((img) => img.isPrimary, orElse: () => images.first);
     return '${ApiConfig.baseOrigin}/api/v1/properties/$id/images/${primary.id}/file';
   }
+}
+
+extension PropertyPurchaseX on PropertyModel {
+  /// A visitor or buyer can place a purchase order on an available listing that is for sale.
+  /// Listings without a category (older API responses) are treated as for sale.
+  bool get canPlacePurchaseOrder => status.toUpperCase() == 'AVAILABLE' && (category == null || category!.toUpperCase() == 'FOR_SALE');
 }

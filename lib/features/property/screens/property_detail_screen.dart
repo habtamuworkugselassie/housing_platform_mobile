@@ -12,6 +12,7 @@ import '../../../core/models/property_model.dart';
 import '../../../core/widgets/property_image.dart';
 import '../../../core/providers/review_provider.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../purchase/screens/purchase_order_screen.dart';
 
 class PropertyDetailScreen extends ConsumerWidget {
   final PropertyModel property;
@@ -786,12 +787,17 @@ class PropertyDetailScreen extends ConsumerWidget {
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: () {},
+                key: const Key('place-purchase-order'),
+                onPressed: property.canPlacePurchaseOrder
+                    ? () => Navigator.of(context).push(
+                          MaterialPageRoute(builder: (_) => PurchaseOrderScreen(property: property)),
+                        )
+                    : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: AppTheme.gold,
+                  foregroundColor: AppTheme.primaryColorDark,
                 ),
-                child: const Text('Book a Tour'),
+                child: Text(property.canPlacePurchaseOrder ? 'Place purchase order' : 'Not available'),
               ),
             ),
           ],
