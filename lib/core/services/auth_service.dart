@@ -30,6 +30,22 @@ class AuthService {
     return authResponse;
   }
 
+  /// Minimal buyer registration; signs the user in immediately.
+  Future<AuthResponse> quickRegister(QuickRegistrationRequest request) async {
+    final response = await _apiClient.post('/auth/quick-register', data: request.toJson());
+    final authResponse = AuthResponse.fromJson(response.data);
+    await _saveTokens(authResponse);
+    return authResponse;
+  }
+
+  /// Sign in (or register as BUYER) with a Google ID token.
+  Future<AuthResponse> loginWithGoogle(String idToken) async {
+    final response = await _apiClient.post('/auth/google', data: {'idToken': idToken});
+    final authResponse = AuthResponse.fromJson(response.data);
+    await _saveTokens(authResponse);
+    return authResponse;
+  }
+
   Future<void> logout() async {
     try {
       await _apiClient.post('/auth/logout');

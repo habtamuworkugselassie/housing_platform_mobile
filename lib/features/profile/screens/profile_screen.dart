@@ -1,3 +1,4 @@
+import '../../purchase/screens/my_purchase_orders_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
@@ -123,6 +124,23 @@ class _ProfileContent extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
               child: const Text('Edit Profile'),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              key: const Key('my-purchase-orders'),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const MyPurchaseOrdersScreen()),
+              ),
+              icon: const Icon(LucideIcons.fileSignature, size: 18),
+              label: const Text('My purchase orders'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppTheme.primaryColor,
+                side: const BorderSide(color: AppTheme.primaryColor),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
             ),
           ),
           const SizedBox(height: 32),

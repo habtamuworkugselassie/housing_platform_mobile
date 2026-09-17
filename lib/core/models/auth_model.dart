@@ -92,3 +92,25 @@ class RegistrationRequest {
         'role': role,
       };
 }
+
+/// Minimal buyer sign-up used from the purchase flow: full name + phone, the rest optional.
+class QuickRegistrationRequest {
+  final String fullName;
+  final String phoneNumber;
+  final String? email;
+  final String? password;
+
+  const QuickRegistrationRequest({
+    required this.fullName,
+    required this.phoneNumber,
+    this.email,
+    this.password,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'fullName': fullName,
+        'phoneNumber': phoneNumber,
+        if (email != null && email!.isNotEmpty) 'email': email,
+        if (password != null && password!.isNotEmpty) 'password': password,
+      };
+}
