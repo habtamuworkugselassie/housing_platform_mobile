@@ -58,6 +58,16 @@ Three doors, all ending in `AuthNotifier` holding a signed-in BUYER:
 | **I'm new here** | `POST /auth/quick-register` | full name + phone (country-code input); email and password optional |
 | **I have an account** | `POST /auth/login/otp/send`, `/confirm` | WhatsApp code via `Pinput`; a phone that already has an account flips here automatically |
 
+## Reservation deposit (Chapa)
+
+`PurchaseOrderDetailScreen` shows the `deposit` block once the seller has accepted and offers
+**Pay deposit** for `DUE` / `PENDING` / `FAILED`. Tapping it calls
+`POST /purchase-orders/{id}/deposit/checkout` and opens Chapa's hosted checkout in the external
+browser (`url_launcher`); card details are entered there, never in the app. When the app resumes
+(`WidgetsBindingObserver`), the screen calls `POST …/deposit/confirm`, shows the outcome and
+reloads the order. A "check status" action covers a late webhook. The button yields to a hint
+while the Reservation Deposit Terms agreement is unsigned or the server has no Chapa key.
+
 ## Google sign-in setup
 
 The ID token is requested with the **web** client id as `serverClientId`, so its audience equals
@@ -79,7 +89,7 @@ Without `GOOGLE_WEB_CLIENT_ID` the button is simply not rendered; the two other 
 
 ## Tests
 
-`flutter test test/purchase` — 43 tests:
+`flutter test test/purchase` — 45 tests:
 
 | File | Covers |
 | --- | --- |
@@ -87,6 +97,7 @@ Without `GOOGLE_WEB_CLIENT_ID` the button is simply not rendered; the two other 
 | `financing_math_test.dart` | instalments identical to the backend (87,039.85 / 58,033.79), split classification, clamping, validation, money formatting |
 | `simple_markdown_test.dart` | block parsing and literal (non-HTML) rendering |
 | `purchase_form_notifier_test.dart` | prefill, dynamic steps, visitor account step and `accountReady`, every gate, payload shape, cash opt-out, duplicate and template-changed handling, server field errors — against a fake `PurchaseService` |
+| `purchase_deposit_model_test.dart` | deposit block parsing, payable / settled flags, labels |
 | `agreement_review_panel_test.dart` | signature controls disabled until scrolled to the end, "Jump to the end", attempted-only errors, input forwarding |
 
 The pre-existing `test/widget_test.dart` is the Flutter template counter test and does not match

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/purchase_model.dart';
 import '../../../core/network/api_exceptions.dart';
@@ -21,8 +22,10 @@ class PurchaseOrderDetailScreen extends ConsumerStatefulWidget {
   ConsumerState<PurchaseOrderDetailScreen> createState() => _PurchaseOrderDetailScreenState();
 }
 
-class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailScreen> {
+class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailScreen> with WidgetsBindingObserver {
   PurchaseOrder? _order;
+  bool _checkoutOpen = false;
+  String? _depositOutcome;
   bool _loading = true;
   bool _acting = false;
   String? _error;
@@ -30,7 +33,69 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _load();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Back from the provider's checkout in the browser: ask the server what happened.
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed && _checkoutOpen) {
+      _checkoutOpen = false;
+      _confirmDeposit();
+    }
+  }
+
+  Future<void> _payDeposit() async {
+    setState(() => _acting = true);
+    try {
+      final checkout = await ref.read(purchaseServiceProvider).startDepositCheckout(_order!.id);
+      final uri = Uri.parse(checkout.checkoutUrl);
+      _checkoutOpen = true;
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        _checkoutOpen = false;
+        throw const ServerException('Could not open the payment page.');
+      }
+    } catch (e) {
+      _checkoutOpen = false;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e is ApiException ? e.message : 'Could not start the payment.'),
+          backgroundColor: AppTheme.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _acting = false);
+    }
+  }
+
+  Future<void> _confirmDeposit() async {
+    if (_order?.deposit == null) return;
+    setState(() => _acting = true);
+    try {
+      final deposit = await ref.read(purchaseServiceProvider).confirmDeposit(_order!.id);
+      if (!mounted) return;
+      setState(() {
+        _depositOutcome = deposit.status == 'PAID' ? 'paid' : deposit.status == 'FAILED' ? 'failed' : 'pending';
+      });
+      await _load();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Text(e is ApiException ? e.message : 'Could not confirm the payment yet.'),
+          backgroundColor: AppTheme.error,
+        ));
+      }
+    } finally {
+      if (mounted) setState(() => _acting = false);
+    }
   }
 
   Future<void> _load() async {
@@ -162,6 +227,7 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
                         if (order.realEstateCompanyName != null) _kv('Seller', order.realEstateCompanyName!),
                       ]),
                       if (order.financing != null) _financingCard(order),
+                      if (order.deposit != null) _depositCard(order),
                       _agreementsCard(order),
                       _historyCard(order),
                       if (order.isOpen)
@@ -237,6 +303,73 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
         for (final s in f.nextSteps) Text('• $s', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
       ],
     ]);
+  }
+
+  Widget _depositCard(PurchaseOrder order) {
+    final d = order.deposit!;
+    final providerName = order.agreements.isNotEmpty ? order.agreements.first.providerName : 'the provider';
+    final paidStyle = d.isSettled;
+    return _card(
+      title: 'Reservation deposit',
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        decoration: BoxDecoration(
+          color: paidStyle ? const Color(0xFFD1FAE5) : d.status == 'FAILED' ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7),
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(PurchaseOrderLabels.depositStatus(d.status),
+            style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: paidStyle ? const Color(0xFF047857) : d.status == 'FAILED' ? const Color(0xFFB91C1C) : const Color(0xFF92400E))),
+      ),
+      children: [
+        Text('Paid to $providerName to reserve the property while the sale is arranged. Refund rules are in the deposit terms.',
+            style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        const SizedBox(height: 8),
+        Text(FinancingMath.formatMoney(d.amount, currency: d.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+        if (d.dueAt != null && (d.status == 'DUE' || d.status == 'FAILED'))
+          Text('Due by ${_date(d.dueAt)}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        if (d.paidAt != null) Text('Paid ${_date(d.paidAt)} via ${d.paymentMethod ?? d.provider}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+        if (_depositOutcome != null) ...[
+          const SizedBox(height: 8),
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: _depositOutcome == 'paid' ? const Color(0xFFD1FAE5) : _depositOutcome == 'failed' ? const Color(0xFFFEE2E2) : const Color(0xFFFEF3C7),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              _depositOutcome == 'paid'
+                  ? 'Your reservation deposit has been received. Thank you!'
+                  : _depositOutcome == 'failed'
+                      ? 'The payment did not go through. You can try again.'
+                      : 'The provider has not confirmed the payment yet. Check again in a moment.',
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+        if (d.status == 'FAILED' && d.failureReason != null)
+          Padding(padding: const EdgeInsets.only(top: 4), child: Text(d.failureReason!, style: const TextStyle(fontSize: 12, color: AppTheme.error))),
+        if (d.isPayable && order.isOpen) ...[
+          const SizedBox(height: 10),
+          if (d.termsPending)
+            _notice('Sign the Reservation Deposit Terms first', 'Review and sign the deposit terms in the agreements below before paying.', actions: const [])
+          else if (!d.checkoutAvailable)
+            const Text('Online payment is not available yet. The provider will contact you with payment instructions.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary))
+          else ...[
+            ElevatedButton.icon(
+              key: const Key('pay-deposit'),
+              onPressed: _acting ? null : _payDeposit,
+              icon: const Icon(Icons.lock_outline, size: 18),
+              label: Text(d.status == 'PENDING' ? 'Continue payment' : d.status == 'FAILED' ? 'Try again' : 'Pay deposit'),
+              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),
+            ),
+            if (d.status == 'PENDING')
+              TextButton(onPressed: _acting ? null : _confirmDeposit, child: const Text('I have paid — check status', style: TextStyle(fontSize: 12))),
+            const Text("You will be taken to Chapa's secure checkout in your browser. Card details are entered there and are never stored on this platform.",
+                style: TextStyle(fontSize: 11, color: AppTheme.textSecondary)),
+          ],
+        ],
+      ],
+    );
   }
 
   Widget _agreementsCard(PurchaseOrder order) => _card(

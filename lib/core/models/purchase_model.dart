@@ -296,6 +296,75 @@ class StatusHistoryEntry {
       );
 }
 
+/// Reservation deposit owed to the provider after seller acceptance.
+class PurchaseDeposit {
+  final double amount;
+  final String currency;
+  final String status;
+  final DateTime? dueAt;
+  final String provider;
+  final String? txRef;
+  final String? checkoutUrl;
+  final String? providerReference;
+  final String? paymentMethod;
+  final DateTime? paidAt;
+  final String? failureReason;
+  final int attempts;
+  final bool termsPending;
+  final bool checkoutAvailable;
+  final String? refundReference;
+  final String? waiveReason;
+
+  const PurchaseDeposit({
+    required this.amount,
+    required this.currency,
+    required this.status,
+    this.dueAt,
+    required this.provider,
+    this.txRef,
+    this.checkoutUrl,
+    this.providerReference,
+    this.paymentMethod,
+    this.paidAt,
+    this.failureReason,
+    required this.attempts,
+    required this.termsPending,
+    required this.checkoutAvailable,
+    this.refundReference,
+    this.waiveReason,
+  });
+
+  bool get isSettled => status == 'PAID' || status == 'WAIVED';
+  bool get isPayable => status == 'DUE' || status == 'PENDING' || status == 'FAILED';
+
+  factory PurchaseDeposit.fromJson(Map<String, dynamic> j) => PurchaseDeposit(
+        amount: _d(j['amount']),
+        currency: j['currency'] as String? ?? 'ETB',
+        status: j['status'] as String? ?? 'DUE',
+        dueAt: _dt(j['dueAt']),
+        provider: j['provider'] as String? ?? 'CHAPA',
+        txRef: j['txRef'] as String?,
+        checkoutUrl: j['checkoutUrl'] as String?,
+        providerReference: j['providerReference'] as String?,
+        paymentMethod: j['paymentMethod'] as String?,
+        paidAt: _dt(j['paidAt']),
+        failureReason: j['failureReason'] as String?,
+        attempts: _in(j['attempts']) ?? 0,
+        termsPending: j['termsPending'] == true,
+        checkoutAvailable: j['checkoutAvailable'] == true,
+        refundReference: j['refundReference'] as String?,
+        waiveReason: j['waiveReason'] as String?,
+      );
+}
+
+class DepositCheckout {
+  final String checkoutUrl;
+  final String txRef;
+  const DepositCheckout({required this.checkoutUrl, required this.txRef});
+  factory DepositCheckout.fromJson(Map<String, dynamic> j) =>
+      DepositCheckout(checkoutUrl: j['checkoutUrl'] as String, txRef: j['txRef']?.toString() ?? '');
+}
+
 class PurchaseOrder {
   final String id;
   final String orderNumber;
@@ -317,6 +386,7 @@ class PurchaseOrder {
   final List<String> warnings;
   final List<PurchaseAgreement> agreements;
   final int pendingSignatures;
+  final PurchaseDeposit? deposit;
   final DateTime? createdAt;
   final List<StatusHistoryEntry> statusHistory;
 
@@ -341,6 +411,7 @@ class PurchaseOrder {
     required this.warnings,
     required this.agreements,
     required this.pendingSignatures,
+    this.deposit,
     this.createdAt,
     required this.statusHistory,
   });
@@ -382,6 +453,7 @@ class PurchaseOrder {
       warnings: List<String>.from(j['warnings'] as List? ?? const []),
       agreements: (j['agreements'] as List? ?? []).map((e) => PurchaseAgreement.fromJson(e as Map<String, dynamic>)).toList(),
       pendingSignatures: _in(j['pendingSignatures']) ?? 0,
+      deposit: j['deposit'] == null ? null : PurchaseDeposit.fromJson(j['deposit'] as Map<String, dynamic>),
       createdAt: _dt(j['createdAt']),
       statusHistory: (j['statusHistory'] as List? ?? []).map((e) => StatusHistoryEntry.fromJson(e as Map<String, dynamic>)).toList(),
     );
@@ -436,4 +508,15 @@ class PurchaseOrderLabels {
       }[s] ?? s;
 
   static String purchaseType(String s) => s == 'BANK_FINANCED' ? 'Bank financed' : 'Cash purchase';
+
+  static String depositStatus(String s) => const {
+        'DUE': 'Due',
+        'PENDING': 'Payment in progress',
+        'PAID': 'Paid',
+        'FAILED': 'Payment failed',
+        'CANCELLED': 'Cancelled',
+        'WAIVED': 'Waived',
+        'REFUND_PENDING': 'Refund pending',
+        'REFUNDED': 'Refunded',
+      }[s] ?? s;
 }

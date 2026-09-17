@@ -35,6 +35,18 @@ class PurchaseService {
     return PagedResponse.fromJson(response.data as Map<String, dynamic>, (j) => PurchaseOrder.fromJson(j));
   }
 
+  /// Starts (or resumes) the reservation-deposit checkout at the payment provider.
+  Future<DepositCheckout> startDepositCheckout(String orderId) async {
+    final response = await _apiClient.post('/purchase-orders/$orderId/deposit/checkout');
+    return DepositCheckout.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Asks the server to confirm the deposit with the provider; idempotent.
+  Future<PurchaseDeposit> confirmDeposit(String orderId) async {
+    final response = await _apiClient.post('/purchase-orders/$orderId/deposit/confirm');
+    return PurchaseDeposit.fromJson(response.data as Map<String, dynamic>);
+  }
+
   Future<PurchaseAgreement> getAgreement(String orderId, String agreementId) async {
     final response = await _apiClient.get('/purchase-orders/$orderId/agreements/$agreementId');
     return PurchaseAgreement.fromJson(response.data as Map<String, dynamic>);
