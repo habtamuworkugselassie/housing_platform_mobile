@@ -16,7 +16,7 @@ declarations both stores now require, and the blockers to clear first.
 | App name | **Ethio Build Connect** |
 | Android application id | `com.ethio_properties.housing_platform_mobile` |
 | iOS bundle id | `com.ethiobuildconnect.housingplatformapp` |
-| Version (pubspec) | `1.0.0+1` → marketing version `1.0.0`, build `1` |
+| Version (pubspec) | `1.0.1+2` → marketing version `1.0.1`, build `2`. Codemagic reads both from `pubspec.yaml` (iOS takes the build number from TestFlight instead) |
 | Launcher icon | `assets/branding/ethio-build-connect-logo.png` (via `flutter_launcher_icons`) |
 
 The application/bundle IDs are permanent once published — don't change them.
@@ -75,7 +75,7 @@ exists, or provide a deletion URL in both listings.
 
 Override at build time without editing the file:
 ```bash
-flutter build appbundle --build-name=1.0.0 --build-number=1 --dart-define=...
+flutter build appbundle --build-name=1.0.1 --build-number=2 --dart-define=...   # Codemagic derives these from pubspec.yaml
 ```
 
 ---
@@ -132,7 +132,7 @@ sideload APK is signed with a dedicated keystore (`sideload-keystore.jks`, alias
 ```bash
 flutter build appbundle \
   --release \
-  --build-name=1.0.0 --build-number=1 \
+  --build-name=1.0.1 --build-number=2 \
   --dart-define=API_BASE_URL=https://api.ethiobuildconnect.et/api/v1
 # output: build/app/outputs/bundle/release/app-release.aab
 ```
@@ -265,6 +265,16 @@ Find your next home, project partner, or investment — all in one app.
 
 ## 7. iOS → App Store
 
+### 7.0 Free compile check before paying for a Mac build
+`.github/workflows/ios-build-check.yml` runs `flutter build ios --release --no-codesign` on a
+GitHub-hosted macOS runner. It needs no Apple account or certificate and catches CocoaPods
+resolution, plugin podspec and Swift/ObjC compile problems, which is exactly what a new Flutter
+plugin tends to break. It runs on pushes to `main` and pull requests that touch `ios/**`,
+`pubspec.yaml` or `pubspec.lock`, and by hand from the Actions tab. macOS minutes are billed at
+10x the Linux rate on private repos, so it deliberately does not run for Dart-only changes. Green
+here means a Codemagic → TestFlight run will not fail on the build step.
+
+
 Requires a **Mac with Xcode** and an **Apple Developer Program** membership ($99/yr).
 
 1. **App Store Connect:** create the app record with bundle id
@@ -278,7 +288,7 @@ Requires a **Mac with Xcode** and an **Apple Developer Program** membership ($99
 4. **Build & archive:**
    ```bash
    flutter build ipa --release \
-     --build-name=1.0.0 --build-number=1 \
+     --build-name=1.0.1 --build-number=2 \
      --dart-define=API_BASE_URL=https://api.ethiobuildconnect.et/api/v1
    ```
    Then open `build/ios/archive/Runner.xcarchive` in Xcode Organizer (or use

@@ -43,10 +43,15 @@ workflows:
         script: find . -name "Podfile" -execdir pod install \;
       - name: Build IPA
         script: |
-          # Auto-increment the build number from the latest one on TestFlight.
+          # Marketing version comes from pubspec.yaml (`version: 1.0.1+2` → 1.0.1), so a release
+          # is bumped in one place. The build number auto-increments from TestFlight instead, because
+          # Apple requires it to rise per upload and the pubspec `+N` is shared with Android.
+          BUILD_NAME=$(sed -n 's/^version: *\([^+[:space:]]*\).*/\1/p' pubspec.yaml)
+          test -n "$BUILD_NAME" || { echo "pubspec.yaml has no version:"; exit 1; }
           BUILD_NUMBER=$(($(app-store-connect get-latest-testflight-build-number "$APP_APPLE_ID") + 1))
+          echo "Building $BUILD_NAME ($BUILD_NUMBER)"
           flutter build ipa --release \
-            --build-name=1.0.0 \
+            --build-name="$BUILD_NAME" \
             --build-number=$BUILD_NUMBER \
             --dart-define=API_BASE_URL="$API_BASE_URL" \
             --export-options-plist=/Users/builder/export_options.plist
@@ -83,12 +88,15 @@ workflows:
         script: flutter pub get
       - name: Build AAB
         script: |
-          # --android-skip-build-dependency-validation: the project pins AGP 8.9.1,
-          # which the very newest Flutter flags as below its preferred minimum; the
-          # combination builds fine, so bypass the version gate.
+          # Version and build number both come from pubspec.yaml (`version: 1.0.1+2`), the same
+          # source the sideload APK uses, so Play and the download page never disagree.
+          BUILD_NAME=$(sed -n 's/^version: *\([^+[:space:]]*\).*/\1/p' pubspec.yaml)
+          BUILD_NUMBER=$(sed -n 's/^version: *[^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)
+          test -n "$BUILD_NAME" -a -n "$BUILD_NUMBER" || { echo "pubspec.yaml version must be <name>+<number>"; exit 1; }
+          echo "Building $BUILD_NAME ($BUILD_NUMBER)"
           flutter build appbundle --release \
-            --android-skip-build-dependency-validation \
-            --build-name=1.0.0 \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER" \
             --dart-define=API_BASE_URL="$API_BASE_URL"
     artifacts:
       - build/**/outputs/bundle/**/*.aab
