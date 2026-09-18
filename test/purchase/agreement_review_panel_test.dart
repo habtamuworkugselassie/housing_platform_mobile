@@ -26,7 +26,7 @@ class _HostState extends State<_Host> {
               title: 'Promise to Purchase Agreement',
               content: widget.content,
               version: 1,
-              providerName: 'Dream Team PLC',
+              providerName: 'Dream Teams Trading PLC',
               scrolledToEnd: scrolled,
               accepted: accepted,
               signatoryName: name,

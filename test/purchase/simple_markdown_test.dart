@@ -20,12 +20,12 @@ void main() {
 
   testWidgets('renders headings and bold text as widgets, never as markup', (tester) async {
     await tester.pumpWidget(const MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: SimpleMarkdown('# PROMISE\n\n**Dream Team PLC** and <b>the buyer</b>.'))),
+      home: Scaffold(body: SingleChildScrollView(child: SimpleMarkdown('# PROMISE\n\n**Dream Teams Trading PLC** and <b>the buyer</b>.'))),
     ));
     expect(find.text('PROMISE'), findsOneWidget);
     final rich = tester.widget<Text>(find.byWidgetPredicate((w) => w is Text && w.textSpan != null));
     final plain = rich.textSpan!.toPlainText();
-    expect(plain, contains('Dream Team PLC'));
+    expect(plain, contains('Dream Teams Trading PLC'));
     expect(plain, contains('<b>the buyer</b>'), reason: 'HTML stays literal text');
     expect(plain, isNot(contains('**')));
   });

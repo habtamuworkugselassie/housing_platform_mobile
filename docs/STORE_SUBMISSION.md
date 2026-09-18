@@ -105,7 +105,7 @@ side-loaded, so Android only lets it update an installed copy when both were
 signed with the **same key**. The first preview APK was signed with a developer's
 local Android *debug* key, which cannot be reproduced elsewhere; from v1.0.1 the
 sideload APK is signed with a dedicated keystore (`sideload-keystore.jks`, alias
-`sideload`, DN `CN=Ethio Build Connect, O=Dream Team PLC`).
+`sideload`, DN `CN=Ethio Build Connect, O=Dream Teams Trading PLC`).
 
 - Keep that keystore and its `key.properties` **out of git** (both are ignored)
   and backed up with the Play upload key. Losing it means every tester must
