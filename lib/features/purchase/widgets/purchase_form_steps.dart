@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/data/country_codes.dart';
 import '../../../core/models/purchase_model.dart';
 import '../../../core/providers/purchase_provider.dart';
 import '../../../core/theme/theme.dart';
@@ -54,10 +53,37 @@ class PurchaseContactStep extends StatefulWidget {
 }
 
 class _PurchaseContactStepState extends State<PurchaseContactStep> {
-  String _countryCode = defaultCountryCode;
-  late final TextEditingController _phone = TextEditingController(text: widget.form.phone);
+  // The form holds one phone string; the buyer sees a country-code selector plus a number box.
+  // `PhoneNumber.split` / `join` bridge the two, exactly as `usePhoneParts` does on the web.
+  late String _countryCode;
+  late final TextEditingController _phone;
   late final TextEditingController _email = TextEditingController(text: widget.form.email);
   late final TextEditingController _message = TextEditingController(text: widget.form.message);
+  String _lastPushed = '';
+  bool _syncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final parts = PhoneNumber.split(widget.form.phone);
+    _countryCode = parts.countryCode;
+    _phone = TextEditingController(text: parts.national)..addListener(_phoneChanged);
+    _lastPushed = widget.form.phone;
+  }
+
+  @override
+  void didUpdateWidget(covariant PurchaseContactStep old) {
+    super.didUpdateWidget(old);
+    // The phone changed elsewhere (account step, profile pre-fill): re-split into the controls.
+    if (widget.form.phone != old.form.phone && widget.form.phone != _lastPushed) {
+      final parts = PhoneNumber.split(widget.form.phone);
+      _syncing = true;
+      _countryCode = parts.countryCode;
+      _phone.text = parts.national;
+      _syncing = false;
+      _lastPushed = widget.form.phone;
+    }
+  }
 
   @override
   void dispose() {
@@ -68,8 +94,28 @@ class _PurchaseContactStepState extends State<PurchaseContactStep> {
   }
 
   void _phoneChanged() {
-    final normalized = PhoneNumber.normalizeWithCountryCode(_countryCode, _phone.text);
-    widget.notifier.setPhone(normalized ?? _phone.text);
+    if (_syncing) return;
+    final text = _phone.text;
+    // A full international number pasted into the number box re-selects its country.
+    if (text.trim().startsWith('+')) {
+      final parts = PhoneNumber.split(text);
+      if (!parts.national.startsWith('+') && (parts.countryCode != _countryCode || parts.national != text)) {
+        _syncing = true;
+        setState(() => _countryCode = parts.countryCode);
+        _phone.value = TextEditingValue(
+          text: parts.national,
+          selection: TextSelection.collapsed(offset: parts.national.length),
+        );
+        _syncing = false;
+      }
+    }
+    _push();
+  }
+
+  void _push() {
+    final joined = PhoneNumber.join(_countryCode, _phone.text);
+    _lastPushed = joined;
+    widget.notifier.setPhone(joined);
   }
 
   @override
@@ -84,13 +130,15 @@ class _PurchaseContactStepState extends State<PurchaseContactStep> {
             'Your phone number is required so the seller and, if applicable, the bank can contact you. Email is optional.'),
         fieldLabel('Phone number *'),
         CountryCodePhoneInput(
+          fieldKey: const Key('contact-phone'),
           countryCode: _countryCode,
           onCountryCodeChanged: (v) {
             setState(() => _countryCode = v);
-            _phoneChanged();
+            _push();
           },
-          phoneController: _phone..addListener(_phoneChanged),
-          placeholder: '9XX XXX XXX',
+          phoneController: _phone,
+          hasError: showPhoneError,
+          placeholder: _countryCode == '+251' ? '9XX XXX XXX' : 'Phone number',
         ),
         Padding(
           padding: const EdgeInsets.only(top: 6),
@@ -99,7 +147,7 @@ class _PurchaseContactStepState extends State<PurchaseContactStep> {
                 ? errors['phone']!
                 : normalized != null
                     ? 'Will be stored as ${PhoneNumber.display(normalized)}'
-                    : 'Ethiopian numbers as 09XX XXX XXX; other countries with their + code.',
+                    : 'Pick your country code, then enter the rest of the number. Ethiopian numbers: 9XX XXX XXX (no leading 0).',
             style: TextStyle(fontSize: 12, color: showPhoneError ? AppTheme.error : AppTheme.textSecondary),
           ),
         ),
