@@ -114,14 +114,16 @@ sideload APK is signed with a dedicated keystore (`sideload-keystore.jks`, alias
   + `android/key.properties`), bumping `version:` in `pubspec.yaml` first so the
   `versionCode` increases:
   ```bash
-  flutter build apk --release --target-platform android-arm64
-  cp build/app/outputs/flutter-apk/app-release.apk \
+  # --split-per-abi keeps plugin native libs (WebRTC) to one ABI too; a plain
+  # --target-platform build still ships x86_64/armeabi-v7a copies (~59 MB vs ~36 MB).
+  flutter build apk --release --split-per-abi
+  cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
      ../housing-platform-frontend/public/downloads/ethio-build-connect.apk
   ```
   then update the version / size chips in `public/download.html`.
 - Verify the signer before publishing:
   ```bash
-  $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app-release.apk
+  $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app-arm64-v8a-release.apk
   ```
 - Testers who still have the debug-signed v1.0.0 must uninstall it once; later
   versions signed with the sideload key install as normal updates.
