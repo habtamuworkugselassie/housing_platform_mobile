@@ -40,7 +40,7 @@ class FakePurchaseService extends PurchaseService {
   }
 }
 
-const promise = AgreementPreview(templateId: 'tpl-1', type: 'PROMISE_TO_PURCHASE', version: 1, title: 'Promise to Purchase Agreement', content: '# PROMISE\n\n**Dream Team PLC**');
+const promise = AgreementPreview(templateId: 'tpl-1', type: 'PROMISE_TO_PURCHASE', version: 1, title: 'Promise to Purchase Agreement', content: '# PROMISE\n\n**Dream Teams Trading PLC**');
 
 const basePreview = PurchasePreview(
   propertyId: 'prop-1',
