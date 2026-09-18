@@ -274,6 +274,12 @@ plugin tends to break. It runs on pushes to `main` and pull requests that touch 
 10x the Linux rate on private repos, so it deliberately does not run for Dart-only changes. Green
 here means a Codemagic → TestFlight run will not fail on the build step.
 
+The first run found two things worth knowing: the iOS stack now needs **Xcode 26.1 or newer**
+(`device_info_plus` 12.4, a dependency of `livekit_client`, uses an iOS 26.1 SDK API), so the
+workflow selects Xcode 26.2 rather than the runner default 16.4; and Flutter 3.47 raised the iOS
+deployment target to **15.0**, which is now committed in `project.pbxproj`, `AppFrameworkInfo.plist`
+and the `Podfile` instead of being re-applied on every build.
+
 
 Requires a **Mac with Xcode** and an **Apple Developer Program** membership ($99/yr).
 

@@ -48,6 +48,15 @@ jobs:
           flutter-version: "3.47.4"
           cache: true
 
+      # The runner image defaults to Xcode 16.4 (iOS 18 SDK). device_info_plus 12.4 (pulled in by
+      # livekit_client) calls NSProcessInfo.isiOSAppOnVision behind an iOS 26.1 availability check,
+      # which only exists in the iOS 26.1+ SDK, so the build needs Xcode 26.1 or newer. Codemagic
+      # uses `xcode: latest`; pin the same generation here so both environments agree.
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.2"
+
       - name: Flutter and Xcode versions
         run: |
           flutter --version
