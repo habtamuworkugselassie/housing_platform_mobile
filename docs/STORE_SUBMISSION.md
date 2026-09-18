@@ -99,6 +99,35 @@ keystore.
    signing key; you keep the upload key. If you lose the upload key you can reset
    it with Google's help; **do not lose the keystore** otherwise.
 
+### 3.1a Sideload (download-page) APK signing
+The APK on ethiobuildconnect.et/download.html is **not** the Play build: it is
+side-loaded, so Android only lets it update an installed copy when both were
+signed with the **same key**. The first preview APK was signed with a developer's
+local Android *debug* key, which cannot be reproduced elsewhere; from v1.0.1 the
+sideload APK is signed with a dedicated keystore (`sideload-keystore.jks`, alias
+`sideload`, DN `CN=Ethio Build Connect, O=Dream Team PLC`).
+
+- Keep that keystore and its `key.properties` **out of git** (both are ignored)
+  and backed up with the Play upload key. Losing it means every tester must
+  uninstall before the next update.
+- Build the download-page APK with it in place (`android/app/sideload-keystore.jks`
+  + `android/key.properties`), bumping `version:` in `pubspec.yaml` first so the
+  `versionCode` increases:
+  ```bash
+  # --split-per-abi keeps plugin native libs (WebRTC) to one ABI too; a plain
+  # --target-platform build still ships x86_64/armeabi-v7a copies (~59 MB vs ~36 MB).
+  flutter build apk --release --split-per-abi
+  cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+     ../housing-platform-frontend/public/downloads/ethio-build-connect.apk
+  ```
+  then update the version / size chips in `public/download.html`.
+- Verify the signer before publishing:
+  ```bash
+  $ANDROID_HOME/build-tools/36.0.0/apksigner verify --print-certs app-arm64-v8a-release.apk
+  ```
+- Testers who still have the debug-signed v1.0.0 must uninstall it once; later
+  versions signed with the sideload key install as normal updates.
+
 ### 3.2 Build the App Bundle (.aab — required by Play)
 ```bash
 flutter build appbundle \
