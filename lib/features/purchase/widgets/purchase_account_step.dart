@@ -60,7 +60,7 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
     if (_phone.text.trim().isEmpty) {
       e['phone'] = 'Phone number is required.';
     } else if (_normalizedPhone == null) {
-      e['phone'] = 'Enter a valid phone number, e.g. 0911223344.';
+      e['phone'] = 'Enter a valid phone number for the selected country, e.g. 911 223 344 for Ethiopia.';
     }
     if (_email.text.trim().isNotEmpty && !PhoneNumber.isValidEmail(_email.text)) e['email'] = 'Please enter a valid email.';
     final pw = _password.text;
@@ -276,10 +276,13 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
         const SizedBox(height: 14),
         _label('Phone number *'),
         CountryCodePhoneInput(
+          fieldKey: const Key('account-phone'),
           countryCode: _countryCode,
           onCountryCodeChanged: (v) => setState(() => _countryCode = v),
           phoneController: _phone,
-          placeholder: '9XX XXX XXX',
+          onChanged: (_) => setState(() {}),
+          hasError: _attempted && errors['phone'] != null,
+          placeholder: _countryCode == '+251' ? '9XX XXX XXX' : 'Phone number',
         ),
         Padding(
           padding: const EdgeInsets.only(top: 6),
@@ -322,10 +325,14 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
   List<Widget> _loginForm() => [
         _label('Phone number'),
         CountryCodePhoneInput(
+          fieldKey: const Key('login-phone'),
           countryCode: _countryCode,
           onCountryCodeChanged: (v) => setState(() => _countryCode = v),
           phoneController: _loginPhone,
-          placeholder: '9XX XXX XXX',
+          onChanged: (_) => setState(() {}),
+          enabled: !_codeSent,
+          hasError: _attempted && _normalizedLoginPhone == null,
+          placeholder: _countryCode == '+251' ? '9XX XXX XXX' : 'Phone number',
         ),
         if (_attempted && _normalizedLoginPhone == null)
           const Padding(padding: EdgeInsets.only(top: 6), child: Text('Enter a valid phone number.', style: TextStyle(fontSize: 12, color: AppTheme.error))),

@@ -24,6 +24,7 @@ lib/core
 ├── services/google_auth_gateway.dart        google_sign_in wrapper → ID token
 ├── providers/purchase_provider.dart         PurchaseFormState + PurchaseFormNotifier (Riverpod, per property)
 ├── utils/phone_number.dart                  E.164 normalisation identical to the backend
+│                                            + split/join for the country-code selector
 ├── utils/financing_math.dart                split / instalment maths for live previews
 └── utils/simple_markdown.dart               agreement text → widgets (no HTML, no package)
 lib/features/purchase
@@ -94,6 +95,8 @@ Without `GOOGLE_WEB_CLIENT_ID` the button is simply not rendered; the two other 
 | File | Covers |
 | --- | --- |
 | `phone_number_test.dart` | the backend normaliser cases, country-code joining, display, email rule |
+| `country_code_phone_input_test.dart` | flag + code shown, searchable picker sheet, fallback for unknown codes |
+| `purchase_contact_step_test.dart` | default +251, trunk-0 dropped, country switch, pre-fill from a stored number, external change, paste of a full number, required error |
 | `financing_math_test.dart` | instalments identical to the backend (87,039.85 / 58,033.79), split classification, clamping, validation, money formatting |
 | `simple_markdown_test.dart` | block parsing and literal (non-HTML) rendering |
 | `purchase_form_notifier_test.dart` | prefill, dynamic steps, visitor account step and `accountReady`, every gate, payload shape, cash opt-out, duplicate and template-changed handling, server field errors — against a fake `PurchaseService` |
