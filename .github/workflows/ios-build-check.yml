@@ -1,0 +1,100 @@
+# Unsigned iOS compile check.
+#
+# Proves the iOS project still builds (CocoaPods resolution, plugin podspecs, Swift/ObjC
+# compilation, Dart AOT for arm64) without an Apple account or signing certificates. It is
+# the cheap gate before a Codemagic → TestFlight run, which needs both.
+#
+# macOS runner minutes on a private repo are billed at 10x the Linux rate, so this runs only
+# when something that can break the iOS build changes, or when triggered by hand. Dart-only
+# changes are covered by `flutter test` / `flutter analyze` on Linux.
+name: iOS build check
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "ios/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/ios-build-check.yml"
+  pull_request:
+    paths:
+      - "ios/**"
+      - "pubspec.yaml"
+      - "pubspec.lock"
+      - ".github/workflows/ios-build-check.yml"
+
+concurrency:
+  group: ios-build-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-ios-unsigned:
+    name: flutter build ios --no-codesign
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          # Keep in step with the version the Android release is built with (see
+          # docs/STORE_SUBMISSION.md); AGP 8.11.1 / Kotlin 2.2.20 are this version's minimums.
+          flutter-version: "3.47.4"
+          cache: true
+
+      # The runner image defaults to Xcode 16.4 (iOS 18 SDK). device_info_plus 12.4 (pulled in by
+      # livekit_client) calls NSProcessInfo.isiOSAppOnVision behind an iOS 26.1 availability check,
+      # which only exists in the iOS 26.1+ SDK, so the build needs Xcode 26.1 or newer. Codemagic
+      # uses `xcode: latest`; pin the same generation here so both environments agree.
+      - name: Select Xcode 26
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: "26.2"
+
+      - name: Flutter and Xcode versions
+        run: |
+          flutter --version
+          xcodebuild -version
+
+      - name: Flutter packages
+        run: flutter pub get
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: pods-${{ runner.os }}-${{ hashFiles('ios/Podfile.lock') }}
+          restore-keys: pods-${{ runner.os }}-
+
+      # `flutter build ios` runs `pod install` itself, so a podspec or dependency problem fails
+      # here with CocoaPods' own message rather than deep inside xcodebuild.
+      - name: Build iOS (release, unsigned)
+        run: flutter build ios --release --no-codesign
+
+      - name: Report app bundle
+        if: success()
+        run: |
+          APP=$(find build/ios/iphoneos -maxdepth 1 -name "*.app" | head -1)
+          echo "Built: $APP"
+          du -sh "$APP"
+          /usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$APP/Info.plist" | sed 's/^/CFBundleShortVersionString: /'
+          /usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$APP/Info.plist" | sed 's/^/CFBundleVersion: /'
+
+      - name: Upload xcodebuild logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-build-logs
+          path: |
+            /Users/runner/Library/Logs/DiagnosticReports/*.ips
+            ios/Pods/Pods.xcodeproj/project.pbxproj
+          if-no-files-found: ignore
+          retention-days: 7
