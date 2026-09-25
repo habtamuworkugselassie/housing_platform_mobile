@@ -846,6 +846,9 @@ class PurchaseBalance {
   final bool fullyPaid;
   final bool payable;
   final bool checkoutAvailable;
+
+  /// The most one online payment may be (Chapa's limit); null when none is set.
+  final double? onlineMaxPerPayment;
   final List<String> paymentMethods;
   final ProviderBankAccount? bankAccount;
   final String transferReference;
@@ -865,6 +868,7 @@ class PurchaseBalance {
     required this.fullyPaid,
     required this.payable,
     required this.checkoutAvailable,
+    this.onlineMaxPerPayment,
     required this.paymentMethods,
     this.bankAccount,
     required this.transferReference,
@@ -887,6 +891,7 @@ class PurchaseBalance {
         fullyPaid: j['fullyPaid'] == true,
         payable: j['payable'] == true,
         checkoutAvailable: j['checkoutAvailable'] == true,
+        onlineMaxPerPayment: _dn(j['onlineMaxPerPayment']),
         paymentMethods: List<String>.from(j['paymentMethods'] as List? ?? DepositMethods.all),
         bankAccount: j['bankAccount'] == null ? null : ProviderBankAccount.fromJson(j['bankAccount'] as Map<String, dynamic>),
         transferReference: j['transferReference'] as String? ?? '',

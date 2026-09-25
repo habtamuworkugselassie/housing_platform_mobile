@@ -230,4 +230,15 @@ void main() {
     expect(service.transferPurpose, 'BALANCE');
     expect(find.text('Awaiting confirmation'), findsOneWidget);
   });
+
+  testWidgets('balance section caps online payments at the per-payment limit', (tester) async {
+    final json = balanceJson()..['onlineMaxPerPayment'] = 75000;
+    final service = DepositFakeService()..balance = PurchaseBalance.fromJson(json);
+    await pumpWidget(tester, const BalanceSection(orderId: 'o1'), service);
+    expect(tester.widget<TextField>(find.byKey(const Key('balance-amount'))).controller!.text, '75000');
+    expect(find.byKey(const Key('online-limit')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('tab-transfer')));
+    await tester.pump();
+    expect(find.byKey(const Key('online-limit')), findsNothing);
+  });
 }
