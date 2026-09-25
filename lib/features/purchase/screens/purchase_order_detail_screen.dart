@@ -10,13 +10,18 @@ import '../../../core/utils/financing_math.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../../core/utils/simple_markdown.dart';
 import '../widgets/agreement_review_panel.dart';
+import '../widgets/balance_section.dart';
+import '../widgets/purchase_payment_widgets.dart';
 import '../widgets/purchase_status_badge.dart';
 
 /// One purchase order: status, financing decisions, agreements to review or sign, history.
 class PurchaseOrderDetailScreen extends ConsumerStatefulWidget {
   final String orderId;
   final bool justCreated;
-  const PurchaseOrderDetailScreen({super.key, required this.orderId, this.justCreated = false});
+
+  /// The deposit checkout was just opened from the order form: confirm it when the app resumes.
+  final bool checkoutOpened;
+  const PurchaseOrderDetailScreen({super.key, required this.orderId, this.justCreated = false, this.checkoutOpened = false});
 
   @override
   ConsumerState<PurchaseOrderDetailScreen> createState() => _PurchaseOrderDetailScreenState();
@@ -30,10 +35,15 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
   bool _acting = false;
   String? _error;
 
+  /// The method for the next deposit checkout; defaults to the one picked when ordering.
+  String? _depositMethod;
+  List<PropertyDocumentItem> _documents = const [];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _checkoutOpen = widget.checkoutOpened;
     _load();
   }
 
@@ -55,7 +65,8 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
   Future<void> _payDeposit() async {
     setState(() => _acting = true);
     try {
-      final checkout = await ref.read(purchaseServiceProvider).startDepositCheckout(_order!.id);
+      final pending = _order!.deposit?.status == 'PENDING';
+      final checkout = await ref.read(purchaseServiceProvider).startDepositCheckout(_order!.id, paymentMethod: pending ? null : _depositMethod);
       final uri = Uri.parse(checkout.checkoutUrl);
       _checkoutOpen = true;
       final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -105,7 +116,16 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
     });
     try {
       final order = await ref.read(purchaseServiceProvider).getById(widget.orderId);
-      if (mounted) setState(() => _order = order);
+      if (mounted) {
+        setState(() {
+          _order = order;
+          _depositMethod ??= order.deposit?.currency == 'USD' ? 'CARD' : order.deposit?.preferredMethod;
+        });
+      }
+      // Documents are secondary: the order still shows if they fail to load.
+      ref.read(purchaseServiceProvider).orderDocuments(order.id).then((docs) {
+        if (mounted) setState(() => _documents = docs);
+      }).catchError((_) {});
     } catch (e) {
       if (mounted) setState(() => _error = e is ApiException ? e.message : 'Could not load the purchase order.');
     } finally {
@@ -228,6 +248,13 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
                       ]),
                       if (order.financing != null) _financingCard(order),
                       if (order.deposit != null) _depositCard(order),
+                      BalanceSection(key: ValueKey('balance-${order.id}-${order.status}'), orderId: order.id),
+                      _card(children: [
+                        PropertyDocumentsList(
+                          documents: _documents,
+                          loadFile: (d) => ref.read(purchaseServiceProvider).orderDocumentFile(order.id, d.id),
+                        ),
+                      ]),
                       _agreementsCard(order),
                       _historyCard(order),
                       if (order.isOpen)
@@ -325,6 +352,9 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
             style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         const SizedBox(height: 8),
         Text(FinancingMath.formatMoney(d.amount, currency: d.currency), style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800, color: AppTheme.textPrimary)),
+        if (d.baseAmount != null && d.exchangeRate != null)
+          Text('Equivalent to ${FinancingMath.formatMoney(d.baseAmount!, currency: d.baseCurrency ?? 'ETB')} at ${d.exchangeRate} birr per US dollar',
+              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         if (d.dueAt != null && (d.status == 'DUE' || d.status == 'FAILED'))
           Text('Due by ${_date(d.dueAt)}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         if (d.paidAt != null) Text('Paid ${_date(d.paidAt)} via ${d.paymentMethod ?? d.provider}', style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
@@ -355,9 +385,19 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
           else if (!d.checkoutAvailable)
             const Text('Online payment is not available yet. The provider will contact you with payment instructions.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary))
           else ...[
+            // A pending checkout resumes as it was started; otherwise the buyer can change the method.
+            if (d.status != 'PENDING') ...[
+              const Text('Pay the deposit with', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: AppTheme.textPrimary)),
+              const SizedBox(height: 6),
+              DepositMethodPicker(
+                methods: d.currency == 'USD' ? const ['CARD'] : DepositMethods.all,
+                selected: _depositMethod,
+                onChanged: _acting ? null : (m) => setState(() => _depositMethod = m),
+              ),
+            ],
             ElevatedButton.icon(
               key: const Key('pay-deposit'),
-              onPressed: _acting ? null : _payDeposit,
+              onPressed: _acting || (d.status != 'PENDING' && _depositMethod == null) ? null : _payDeposit,
               icon: const Icon(Icons.lock_outline, size: 18),
               label: Text(d.status == 'PENDING' ? 'Continue payment' : d.status == 'FAILED' ? 'Try again' : 'Pay deposit'),
               style: ElevatedButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white, padding: const EdgeInsets.symmetric(vertical: 12), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))),

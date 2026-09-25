@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/property_model.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -8,6 +9,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/utils/financing_math.dart';
 import '../widgets/purchase_account_step.dart';
 import '../widgets/purchase_form_steps.dart';
+import '../widgets/purchase_payment_widgets.dart';
 import '../widgets/wizard_steps_header.dart';
 import 'purchase_order_detail_screen.dart';
 
@@ -22,6 +24,9 @@ class PurchaseOrderScreen extends ConsumerStatefulWidget {
 
 class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
   final Set<WizardStep> _attempted = {};
+
+  /// True while the new order is being handed to the payment provider's checkout.
+  bool _redirecting = false;
   final _scroll = ScrollController();
 
   @override
@@ -42,11 +47,25 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
   Future<void> _primary(PurchaseFormNotifier notifier, PurchaseFormState form) async {
     if (form.step == WizardStep.review) {
       final order = await notifier.submit();
-      if (order != null && mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => PurchaseOrderDetailScreen(orderId: order.id, justCreated: true)),
-        );
+      if (order == null || !mounted) return;
+      // The deposit is paid right away: open Chapa's checkout on the chosen method. The order page
+      // confirms the payment when the buyer comes back to the app.
+      var checkoutOpened = false;
+      final deposit = order.deposit;
+      if (deposit != null && deposit.checkoutAvailable && !deposit.termsPending && form.paymentMethod != null) {
+        setState(() => _redirecting = true);
+        try {
+          final checkout = await ref.read(purchaseServiceProvider).startDepositCheckout(order.id, paymentMethod: form.paymentMethod);
+          checkoutOpened = await launchUrl(Uri.parse(checkout.checkoutUrl), mode: LaunchMode.externalApplication);
+        } catch (_) {
+          // The order exists; the buyer can retry the payment from the order page.
+        }
+        if (mounted) setState(() => _redirecting = false);
       }
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => PurchaseOrderDetailScreen(orderId: order.id, justCreated: true, checkoutOpened: checkoutOpened)),
+      );
       return;
     }
     setState(() => _attempted.add(form.step));
@@ -130,7 +149,7 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
       }),
       bottomNavigationBar: form.preview == null || form.step == WizardStep.account || (auth.isAuthenticated && !isBuyer)
           ? null
-          : _NavBar(form: form, notifier: notifier, onPrimary: () => _primary(notifier, form)),
+          : _NavBar(form: form, notifier: notifier, busy: _redirecting, onPrimary: () => _primary(notifier, form)),
     );
   }
 
@@ -144,8 +163,15 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
         return PurchaseContactStep(form: form, notifier: notifier, attempted: _attempted.contains(WizardStep.contact));
       case WizardStep.financing:
         return PurchaseFinancingStep(form: form, notifier: notifier, attempted: _attempted.contains(WizardStep.financing));
+      case WizardStep.payment:
+        return PurchasePaymentStep(form: form, notifier: notifier, attempted: _attempted.contains(WizardStep.payment));
       case WizardStep.agreement:
-        return PurchaseAgreementStep(form: form, notifier: notifier, attempted: _attempted.contains(WizardStep.agreement));
+        return PurchaseAgreementStep(
+          form: form,
+          notifier: notifier,
+          attempted: _attempted.contains(WizardStep.agreement),
+          loadDocument: (d) => ref.read(purchaseServiceProvider).previewDocumentFile(widget.property.id, d.id),
+        );
       case WizardStep.review:
         return PurchaseReviewStep(form: form, notifier: notifier, propertyTitle: widget.property.title);
     }
@@ -188,7 +214,12 @@ class _PropertySummary extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: financing ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
-            child: Text(financing ? 'Bank financing is available for this property' : 'Direct purchase — no bank financing is linked to this listing',
+            child: Text(
+                financing
+                    ? 'Bank financing is available for this property'
+                    : preview.deposit?.checkoutAvailable == true
+                        ? 'Pay online with telebirr, CBE Birr, M-Pesa, Awash Birr or card'
+                        : 'Direct purchase — no bank financing is linked to this listing',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: financing ? const Color(0xFF1D4ED8) : AppTheme.textSecondary)),
           ),
         ],
@@ -201,7 +232,10 @@ class _NavBar extends StatelessWidget {
   final PurchaseFormState form;
   final PurchaseFormNotifier notifier;
   final VoidCallback onPrimary;
-  const _NavBar({required this.form, required this.notifier, required this.onPrimary});
+
+  /// Opening the payment provider's checkout after the order was placed.
+  final bool busy;
+  const _NavBar({required this.form, required this.notifier, required this.onPrimary, this.busy = false});
 
   @override
   Widget build(BuildContext context) {
@@ -224,16 +258,22 @@ class _NavBar extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 key: const Key('wizard-primary'),
-                onPressed: (isReview ? form.canSubmit : true) && !form.submitting ? onPrimary : null,
+                onPressed: (isReview ? form.canSubmit : true) && !form.submitting && !busy ? onPrimary : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: form.submitting
+                child: form.submitting || busy
                     ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : Text(isReview ? 'Submit purchase order' : 'Next', style: const TextStyle(fontWeight: FontWeight.w700)),
+                    : Text(
+                        !isReview
+                            ? 'Next'
+                            : form.depositOnline && form.paymentMethod != null
+                                ? 'Place order and pay deposit'
+                                : 'Submit purchase order',
+                        style: const TextStyle(fontWeight: FontWeight.w700)),
               ),
             ),
           ],

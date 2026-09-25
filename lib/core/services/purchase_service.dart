@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../models/page_model.dart';
 import '../models/purchase_model.dart';
 import '../network/api_client.dart';
@@ -8,10 +10,15 @@ class PurchaseService {
 
   PurchaseService(this._apiClient);
 
-  Future<PurchasePreview> preview(String propertyId, {String? currency}) async {
+  /// [depositCurrency] 'USD' quotes (and renders the deposit terms for) a USD card deposit.
+  Future<PurchasePreview> preview(String propertyId, {String? currency, String? depositCurrency}) async {
+    final params = <String, dynamic>{
+      if (currency != null) 'currency': currency,
+      if (depositCurrency != null) 'depositCurrency': depositCurrency,
+    };
     final response = await _apiClient.get(
       '/properties/$propertyId/purchase-preview',
-      queryParameters: currency == null ? null : {'currency': currency},
+      queryParameters: params.isEmpty ? null : params,
     );
     return PurchasePreview.fromJson(response.data as Map<String, dynamic>);
   }
@@ -36,8 +43,12 @@ class PurchaseService {
   }
 
   /// Starts (or resumes) the reservation-deposit checkout at the payment provider.
-  Future<DepositCheckout> startDepositCheckout(String orderId) async {
-    final response = await _apiClient.post('/purchase-orders/$orderId/deposit/checkout');
+  /// A non-null [paymentMethod] replaces the one picked when the order was placed.
+  Future<DepositCheckout> startDepositCheckout(String orderId, {String? paymentMethod}) async {
+    final response = await _apiClient.post(
+      '/purchase-orders/$orderId/deposit/checkout',
+      data: paymentMethod == null ? null : {'paymentMethod': paymentMethod},
+    );
     return DepositCheckout.fromJson(response.data as Map<String, dynamic>);
   }
 
@@ -79,4 +90,63 @@ class PurchaseService {
     });
     return PurchaseOrder.fromJson(response.data as Map<String, dynamic>);
   }
+
+  // ---------------------------------------------------------------- balance and service fee
+
+  Future<PurchaseBalance> getBalance(String orderId) async {
+    final response = await _apiClient.get('/purchase-orders/$orderId/balance');
+    return PurchaseBalance.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// [purpose] 'FEES' pays the service fee (markup + VAT); 'BALANCE' the rest of the price.
+  Future<DepositCheckout> payBalanceOnline(String orderId, double amount, String? paymentMethod, {String purpose = 'BALANCE'}) async {
+    final response = await _apiClient.post('/purchase-orders/$orderId/balance/checkout', data: {
+      'amount': amount,
+      'paymentMethod': paymentMethod,
+      'purpose': purpose,
+    });
+    return DepositCheckout.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<PurchaseBalance> confirmBalance(String orderId) async {
+    final response = await _apiClient.post('/purchase-orders/$orderId/balance/confirm');
+    return PurchaseBalance.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// Reports a bank transfer with a photo or PDF of the receipt; the seller or an admin confirms it.
+  Future<PurchaseBalance> reportTransfer(
+    String orderId, {
+    required double amount,
+    required String reference,
+    String? paidOn,
+    required List<int> receipt,
+    required String receiptName,
+    String purpose = 'BALANCE',
+  }) async {
+    final form = FormData.fromMap({
+      'amount': amount.toString(),
+      'reference': reference,
+      if (paidOn != null) 'paidOn': paidOn,
+      'purpose': purpose,
+      'slip': MultipartFile.fromBytes(receipt, filename: receiptName),
+    });
+    final response = await _apiClient.postForm('/purchase-orders/$orderId/balance/transfers', data: form);
+    return PurchaseBalance.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<int>> balanceReceipt(String orderId, String paymentId) =>
+      _apiClient.getBytes('/purchase-orders/$orderId/balance/payments/$paymentId/slip');
+
+  // ---------------------------------------------------------------- property documents
+
+  Future<List<PropertyDocumentItem>> orderDocuments(String orderId) async {
+    final response = await _apiClient.get('/purchase-orders/$orderId/documents');
+    return (response.data as List? ?? []).map((e) => PropertyDocumentItem.fromJson(e as Map<String, dynamic>)).toList();
+  }
+
+  Future<List<int>> orderDocumentFile(String orderId, String documentId) =>
+      _apiClient.getBytes('/purchase-orders/$orderId/documents/$documentId/file');
+
+  Future<List<int>> previewDocumentFile(String propertyId, String documentId) =>
+      _apiClient.getBytes('/properties/$propertyId/purchase-preview/documents/$documentId/file');
 }

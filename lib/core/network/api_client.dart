@@ -217,6 +217,16 @@ class ApiClient {
     }
   }
 
+  /// Downloads a file that needs the signed-in user's token (private documents, receipts).
+  Future<List<int>> getBytes(String path) async {
+    try {
+      final response = await _dio.get<List<int>>(path, options: Options(responseType: ResponseType.bytes));
+      return response.data ?? const [];
+    } on DioException catch (e) {
+      throw e.error ?? e;
+    }
+  }
+
   Future<Response> put(String path, {dynamic data}) async {
     try {
       return await _dio.put(path, data: data);

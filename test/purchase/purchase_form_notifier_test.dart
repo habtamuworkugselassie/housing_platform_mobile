@@ -18,7 +18,7 @@ class FakePurchaseService extends PurchaseService {
   Object? createError;
 
   @override
-  Future<PurchasePreview> preview(String propertyId, {String? currency}) async {
+  Future<PurchasePreview> preview(String propertyId, {String? currency, String? depositCurrency}) async {
     previewCalls++;
     if (previewError != null) throw previewError!;
     return previewResult;

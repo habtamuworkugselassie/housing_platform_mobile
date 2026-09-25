@@ -10,7 +10,7 @@ import 'auth_provider.dart';
 
 final purchaseServiceProvider = Provider<PurchaseService>((ref) => PurchaseService(ref.read(apiClientProvider)));
 
-enum WizardStep { account, contact, financing, agreement, review }
+enum WizardStep { account, contact, financing, payment, agreement, review }
 
 /// Everything the purchase wizard needs, in one immutable value. Derived values are getters so
 /// the UI and the tests read the same rules.
@@ -41,6 +41,17 @@ class PurchaseFormState {
   final bool accepted;
   final String signatoryName;
 
+  // payment: the reservation deposit is paid right after the order is placed
+  final String? paymentMethod;
+
+  /// 'USD' pays an ETB deposit by international card; null pays it as quoted.
+  final String? depositCurrency;
+
+  // the Reservation Deposit Terms, signed with the same name as the Promise to Purchase
+  final String? depositTemplateId;
+  final bool depositScrolledToEnd;
+  final bool depositAccepted;
+
   // submission
   final bool submitting;
   final String? submitError;
@@ -65,6 +76,11 @@ class PurchaseFormState {
     this.scrolledToEnd = false,
     this.accepted = false,
     this.signatoryName = '',
+    this.paymentMethod,
+    this.depositCurrency,
+    this.depositTemplateId,
+    this.depositScrolledToEnd = false,
+    this.depositAccepted = false,
     this.submitting = false,
     this.submitError,
     this.serverFieldErrors = const {},
@@ -91,6 +107,14 @@ class PurchaseFormState {
     bool? scrolledToEnd,
     bool? accepted,
     String? signatoryName,
+    String? paymentMethod,
+    bool clearPaymentMethod = false,
+    String? depositCurrency,
+    bool clearDepositCurrency = false,
+    String? depositTemplateId,
+    bool clearDepositTemplateId = false,
+    bool? depositScrolledToEnd,
+    bool? depositAccepted,
     bool? submitting,
     String? submitError,
     bool clearSubmitError = false,
@@ -115,6 +139,11 @@ class PurchaseFormState {
       scrolledToEnd: scrolledToEnd ?? this.scrolledToEnd,
       accepted: accepted ?? this.accepted,
       signatoryName: signatoryName ?? this.signatoryName,
+      paymentMethod: clearPaymentMethod ? null : (paymentMethod ?? this.paymentMethod),
+      depositCurrency: clearDepositCurrency ? null : (depositCurrency ?? this.depositCurrency),
+      depositTemplateId: clearDepositTemplateId ? null : (depositTemplateId ?? this.depositTemplateId),
+      depositScrolledToEnd: depositScrolledToEnd ?? this.depositScrolledToEnd,
+      depositAccepted: depositAccepted ?? this.depositAccepted,
       submitting: submitting ?? this.submitting,
       submitError: clearSubmitError ? null : (submitError ?? this.submitError),
       serverFieldErrors: serverFieldErrors ?? this.serverFieldErrors,
@@ -126,11 +155,22 @@ class PurchaseFormState {
 
   bool get financingAvailable => preview?.financingAvailable == true;
 
-  /// The financing step disappears entirely when the property has no active financing product.
+  /// The reservation deposit paid when placing the order; null when deposits are disabled.
+  DepositQuote? get depositQuote => preview?.deposit;
+
+  /// Online checkout works on the server, so the buyer picks a method and pays right away.
+  bool get depositOnline => depositQuote?.checkoutAvailable == true;
+
+  /// The financing step disappears when the property has no active financing product, and the
+  /// payment step when no deposit is taken.
   List<WizardStep> get steps {
-    final rest = financingAvailable
-        ? const [WizardStep.contact, WizardStep.financing, WizardStep.agreement, WizardStep.review]
-        : const [WizardStep.contact, WizardStep.agreement, WizardStep.review];
+    final rest = <WizardStep>[
+      WizardStep.contact,
+      if (financingAvailable) WizardStep.financing,
+      if (depositQuote != null) WizardStep.payment,
+      WizardStep.agreement,
+      WizardStep.review,
+    ];
     return needsAccount ? [WizardStep.account, ...rest] : rest;
   }
 
@@ -157,8 +197,26 @@ class PurchaseFormState {
     );
   }
 
-  AgreementPreview? get promiseAgreement =>
-      (preview?.agreementsToSign.isNotEmpty ?? false) ? preview!.agreementsToSign.first : null;
+  AgreementPreview? get promiseAgreement {
+    final list = preview?.agreementsToSign ?? const <AgreementPreview>[];
+    for (final a in list) {
+      if (a.type == 'PROMISE_TO_PURCHASE') return a;
+    }
+    return list.isNotEmpty ? list.first : null;
+  }
+
+  AgreementPreview? get depositTermsAgreement {
+    for (final a in preview?.agreementsToSign ?? const <AgreementPreview>[]) {
+      if (a.type == 'RESERVATION_DEPOSIT_TERMS') return a;
+    }
+    return null;
+  }
+
+  Map<String, String> get paymentErrors {
+    final errors = <String, String>{};
+    if (depositOnline && paymentMethod == null) errors['method'] = 'Choose how you will pay the deposit.';
+    return errors;
+  }
 
   Map<String, String> get contactErrors {
     final errors = <String, String>{};
@@ -196,6 +254,10 @@ class PurchaseFormState {
     if (!scrolledToEnd) errors['scroll'] = 'Please read the whole agreement.';
     if (!accepted) errors['accepted'] = 'You must accept the agreement to continue.';
     if (signatoryName.trim().length < 3) errors['signatoryName'] = 'Enter your full name as your signature.';
+    if (depositTermsAgreement != null) {
+      if (!depositScrolledToEnd) errors['depositScroll'] = 'Please read the whole Reservation Deposit Terms.';
+      if (!depositAccepted) errors['depositAccepted'] = 'You must accept the Reservation Deposit Terms to continue.';
+    }
     return errors;
   }
 
@@ -207,6 +269,8 @@ class PurchaseFormState {
         return contactErrors.isEmpty;
       case WizardStep.financing:
         return financingErrors.isEmpty;
+      case WizardStep.payment:
+        return paymentErrors.isEmpty;
       case WizardStep.agreement:
         return agreementErrors.isEmpty;
       case WizardStep.review:
@@ -219,6 +283,7 @@ class PurchaseFormState {
       !needsAccount &&
       isStepValid(WizardStep.contact) &&
       isStepValid(WizardStep.financing) &&
+      isStepValid(WizardStep.payment) &&
       isStepValid(WizardStep.agreement);
 
   /// Exactly what will be posted; also shown on the review step.
@@ -256,6 +321,16 @@ class PurchaseFormState {
         accepted: accepted,
         signatoryFullName: signatoryName.trim(),
       ),
+      depositTerms: depositTermsAgreement == null
+          ? null
+          : AgreementSignature(
+              templateId: depositTermsAgreement!.templateId,
+              accepted: depositAccepted,
+              signatoryFullName: signatoryName.trim(),
+            ),
+      depositPaymentMethod: depositQuote != null ? paymentMethod : null,
+      // Only when the server actually quoted the converted deposit.
+      depositCurrency: depositCurrency == 'USD' && (depositQuote?.converted ?? false) ? 'USD' : null,
     );
   }
 }
@@ -282,7 +357,7 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
   Future<void> loadPreview() async {
     state = state.copyWith(loadingPreview: true, clearPreviewError: true);
     try {
-      final preview = await _service.preview(state.propertyId);
+      final preview = await _service.preview(state.propertyId, depositCurrency: state.depositCurrency);
       var next = state.copyWith(preview: preview, loadingPreview: false);
       final offers = preview.financingOffers;
       if (offers.isNotEmpty) {
@@ -297,6 +372,22 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
       final promise = preview.agreementsToSign.isEmpty ? null : preview.agreementsToSign.first;
       if (promise == null || promise.templateId != state.templateId) {
         next = next.copyWith(templateId: promise?.templateId, clearTemplateId: promise == null, scrolledToEnd: false, accepted: false);
+      }
+      final terms = next.depositTermsAgreement;
+      if (terms == null || terms.templateId != state.depositTemplateId) {
+        next = next.copyWith(
+          depositTemplateId: terms?.templateId,
+          clearDepositTemplateId: terms == null,
+          depositScrolledToEnd: false,
+          depositAccepted: false,
+        );
+      }
+      // USD no longer offered (rate removed): fall back to birr. Drop a method no longer offered.
+      if (next.depositCurrency == 'USD' && !(preview.deposit?.converted ?? false)) {
+        next = next.copyWith(clearDepositCurrency: true);
+      }
+      if (next.paymentMethod != null && !(preview.deposit?.paymentMethods.contains(next.paymentMethod) ?? false)) {
+        next = next.copyWith(clearPaymentMethod: true);
       }
       state = next;
     } catch (e) {
@@ -352,6 +443,26 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
   void setAccepted(bool v) => state = state.copyWith(accepted: v);
   void setSignatoryName(String v) => state = state.copyWith(signatoryName: v);
 
+  void setPaymentMethod(String m) => state = state.copyWith(paymentMethod: m);
+  void setDepositScrolledToEnd(bool v) => state = state.copyWith(depositScrolledToEnd: v);
+  void setDepositAccepted(bool v) => state = state.copyWith(depositAccepted: v);
+
+  /// Switches the deposit between birr and USD (international card). The deposit terms quote the
+  /// amount, so they are re-rendered and must be read and accepted again.
+  Future<void> setDepositCurrency(String currency) async {
+    final usd = currency == 'USD';
+    if ((state.depositCurrency == 'USD') == usd) return;
+    state = state.copyWith(
+      depositCurrency: usd ? 'USD' : null,
+      clearDepositCurrency: !usd,
+      paymentMethod: usd ? 'CARD' : null,
+      depositScrolledToEnd: false,
+      depositAccepted: false,
+      clearDepositTemplateId: true,
+    );
+    await loadPreview();
+  }
+
   // ------------------------------------------------------------------ navigation
 
   /// Never jumps past a step that is still invalid.
@@ -402,7 +513,8 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
       final message = e.toString();
       if (message.contains('already have an open purchase order')) {
         state = state.copyWith(submitting: false, submitError: 'You already have an open purchase order for this property.');
-      } else if (message.contains('Promise to Purchase agreement has changed')) {
+      } else if (message.contains('Promise to Purchase agreement has changed') ||
+          message.contains('Reservation Deposit Terms have changed')) {
         // The text changed under the buyer: reload it and make them read it again.
         state = state.copyWith(
           submitting: false,
