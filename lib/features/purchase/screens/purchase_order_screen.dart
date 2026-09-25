@@ -188,7 +188,7 @@ class _PropertySummary extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
             decoration: BoxDecoration(color: financing ? const Color(0xFFDBEAFE) : const Color(0xFFF3F4F6), borderRadius: BorderRadius.circular(10)),
-            child: Text(financing ? 'Bank financing is available for this property' : 'Standard cash purchase — no financing product is linked',
+            child: Text(financing ? 'Bank financing is available for this property' : 'Direct purchase — no bank financing is linked to this listing',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: financing ? const Color(0xFF1D4ED8) : AppTheme.textSecondary)),
           ),
         ],

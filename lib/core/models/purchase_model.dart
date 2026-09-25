@@ -482,7 +482,7 @@ class PurchaseOrderLabels {
         'AWAITING_FINANCING': 'The seller accepted. The bank is now reviewing your loan application.',
         'FINANCING_APPROVED': 'The bank approved your financing. Arrange payment with the seller.',
         'FINANCING_PARTIALLY_APPROVED': 'The bank approved a smaller loan than requested. Decide how to proceed below.',
-        'FINANCING_REJECTED': 'The bank declined the loan. You can re-apply for less, switch to a cash purchase, or cancel.',
+        'FINANCING_REJECTED': 'The bank declined the loan. You can re-apply for less, continue without a loan, or cancel.',
         'AWAITING_PAYMENT': 'Arrange payment with the seller. They will mark the sale complete once paid.',
         'COMPLETED': 'The sale is complete. Congratulations!',
         'CANCELLED': 'You cancelled this order.',
@@ -507,7 +507,7 @@ class PurchaseOrderLabels {
         'VOID': 'Void',
       }[s] ?? s;
 
-  static String purchaseType(String s) => s == 'BANK_FINANCED' ? 'Bank financed' : 'Cash purchase';
+  static String purchaseType(String s) => s == 'BANK_FINANCED' ? 'Bank financed' : 'Direct purchase';
 
   static String depositStatus(String s) => const {
         'DUE': 'Due',

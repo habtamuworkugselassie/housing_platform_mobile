@@ -282,7 +282,7 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
           'Approved loan: ${FinancingMath.formatMoney(f.approvedAmount ?? 0, currency: c)}. If you accept, your own contribution becomes ${FinancingMath.formatMoney(f.proposedCashPortionAmount ?? 0, currency: c)}.',
           actions: [
             ElevatedButton(onPressed: _acting ? null : () => _act(() => ref.read(purchaseServiceProvider).acceptPartialApproval(order.id)), child: const Text('Accept and continue')),
-            OutlinedButton(onPressed: _acting ? null : () => _act(() => ref.read(purchaseServiceProvider).convertToCash(order.id)), child: const Text('Continue as cash purchase')),
+            OutlinedButton(onPressed: _acting ? null : () => _act(() => ref.read(purchaseServiceProvider).convertToCash(order.id)), child: const Text('Continue without a loan')),
           ],
         ),
       ],
@@ -290,10 +290,10 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
         const SizedBox(height: 10),
         _notice(
           'Financing was declined',
-          'You can apply again for a smaller amount, continue as a cash purchase, or cancel the order.',
+          'You can apply again for a smaller amount, continue without a loan, or cancel the order.',
           actions: [
             ElevatedButton(onPressed: _acting ? null : _reapply, child: const Text('Re-apply for less')),
-            OutlinedButton(onPressed: _acting ? null : () => _act(() => ref.read(purchaseServiceProvider).convertToCash(order.id)), child: const Text('Continue as cash purchase')),
+            OutlinedButton(onPressed: _acting ? null : () => _act(() => ref.read(purchaseServiceProvider).convertToCash(order.id)), child: const Text('Continue without a loan')),
           ],
         ),
       ],

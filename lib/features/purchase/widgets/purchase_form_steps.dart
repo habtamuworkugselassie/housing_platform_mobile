@@ -202,13 +202,13 @@ class PurchaseFinancingStep extends StatelessWidget {
           activeThumbColor: AppTheme.primaryColor,
           contentPadding: EdgeInsets.zero,
           title: const Text('Finance part of the purchase through a bank', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-          subtitle: const Text('Turn off to place a plain cash order even though financing is available.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          subtitle: const Text('Turn off to buy without a bank loan even though financing is available.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
         ),
         if (!form.useFinancing)
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(border: Border.all(color: AppTheme.borderColor), borderRadius: BorderRadius.circular(12)),
-            child: const Text('You chose to pay cash. The order will not include a loan application.', style: TextStyle(color: AppTheme.textSecondary)),
+            child: const Text('You chose to buy without a bank loan. The order will not include a loan application.', style: TextStyle(color: AppTheme.textSecondary)),
           )
         else ...[
           fieldLabel('Choose a financing offer'),
@@ -499,7 +499,7 @@ class PurchaseReviewStep extends StatelessWidget {
                 style: const TextStyle(color: AppTheme.textPrimary)),
             Text('${split.tenureMonths} months · ≈ ${money(split.installment, currency)}/month', style: const TextStyle(color: AppTheme.textSecondary)),
           ] else ...[
-            const Text('Cash purchase', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+            const Text('Direct purchase', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
             const Text('Direct purchase without bank financing.', style: TextStyle(color: AppTheme.textSecondary)),
           ],
         ], onEdit: form.financingAvailable ? () => notifier.goTo(WizardStep.financing) : null),
