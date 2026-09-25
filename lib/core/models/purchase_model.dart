@@ -87,6 +87,15 @@ class PurchasePreview {
   final List<FinancingOption> financingOffers;
   final List<AgreementPreview> agreementsToSign;
 
+  /// The reservation deposit paid when placing the order; null when deposits are disabled.
+  final DepositQuote? deposit;
+
+  /// The provider's service fee (markup + VAT), due once the seller accepts; null when none.
+  final FeeQuote? fees;
+
+  /// Verified official documents (Annex A of the Promise to Purchase); signed-in users only.
+  final List<PropertyDocumentItem> documents;
+
   const PurchasePreview({
     required this.propertyId,
     required this.listedPrice,
@@ -95,6 +104,9 @@ class PurchasePreview {
     required this.financingAvailable,
     required this.financingOffers,
     required this.agreementsToSign,
+    this.deposit,
+    this.fees,
+    this.documents = const [],
   });
 
   factory PurchasePreview.fromJson(Map<String, dynamic> j) => PurchasePreview(
@@ -105,6 +117,140 @@ class PurchasePreview {
         financingAvailable: j['financingAvailable'] == true,
         financingOffers: (j['financingOffers'] as List? ?? []).map((e) => FinancingOption.fromJson(e as Map<String, dynamic>)).toList(),
         agreementsToSign: (j['agreementsToSign'] as List? ?? []).map((e) => AgreementPreview.fromJson(e as Map<String, dynamic>)).toList(),
+        deposit: j['deposit'] == null ? null : DepositQuote.fromJson(j['deposit'] as Map<String, dynamic>),
+        fees: j['fees'] == null ? null : FeeQuote.fromJson(j['fees'] as Map<String, dynamic>),
+        documents: (j['documents'] as List? ?? []).map((e) => PropertyDocumentItem.fromJson(e as Map<String, dynamic>)).toList(),
+      );
+}
+
+/// How the buyer pays; each value steers Chapa's hosted checkout (card = every method).
+class DepositMethods {
+  DepositMethods._();
+  static const all = ['TELEBIRR', 'CBE_BIRR', 'MPESA', 'AWASH_BIRR', 'CARD'];
+
+  static String label(String m) => const {
+        'TELEBIRR': 'telebirr',
+        'CBE_BIRR': 'CBE Birr',
+        'MPESA': 'M-Pesa',
+        'AWASH_BIRR': 'Awash Birr',
+        'CARD': 'Card or other method',
+      }[m] ?? m;
+
+  static String help(String m) => const {
+        'TELEBIRR': 'Pay from your telebirr wallet',
+        'CBE_BIRR': 'Pay from your CBE Birr wallet',
+        'MPESA': 'Pay from your M-Pesa wallet',
+        'AWASH_BIRR': 'Pay from your Awash Birr wallet',
+        'CARD': 'Visa, Mastercard and every other method Chapa offers',
+      }[m] ?? '';
+}
+
+class DepositQuote {
+  final double amount;
+  final String currency;
+  final bool checkoutAvailable;
+  final List<String> paymentMethods;
+
+  /// When an ETB deposit is quoted in USD: the ETB amount and the rate (birr per USD).
+  final double? baseAmount;
+  final String? baseCurrency;
+  final double? exchangeRate;
+
+  /// The deposit in USD by international card, when that option is on.
+  final double? usdAmount;
+
+  const DepositQuote({
+    required this.amount,
+    required this.currency,
+    required this.checkoutAvailable,
+    this.paymentMethods = DepositMethods.all,
+    this.baseAmount,
+    this.baseCurrency,
+    this.exchangeRate,
+    this.usdAmount,
+  });
+
+  bool get converted => baseAmount != null && exchangeRate != null;
+
+  factory DepositQuote.fromJson(Map<String, dynamic> j) => DepositQuote(
+        amount: _d(j['amount']),
+        currency: j['currency'] as String? ?? 'ETB',
+        checkoutAvailable: j['checkoutAvailable'] == true,
+        paymentMethods: List<String>.from(j['paymentMethods'] as List? ?? DepositMethods.all),
+        baseAmount: _dn(j['baseAmount']),
+        baseCurrency: j['baseCurrency'] as String?,
+        exchangeRate: _dn(j['exchangeRate']),
+        usdAmount: _dn(j['usdAmount']),
+      );
+}
+
+class FeeQuote {
+  final double markupPercent;
+  final double markupAmount;
+  final double vatRate;
+  final double vatAmount;
+  final double total;
+  final String currency;
+
+  const FeeQuote({
+    required this.markupPercent,
+    required this.markupAmount,
+    required this.vatRate,
+    required this.vatAmount,
+    required this.total,
+    required this.currency,
+  });
+
+  factory FeeQuote.fromJson(Map<String, dynamic> j) => FeeQuote(
+        markupPercent: _d(j['markupPercent']),
+        markupAmount: _d(j['markupAmount']),
+        vatRate: _d(j['vatRate']),
+        vatAmount: _d(j['vatAmount']),
+        total: _d(j['total']),
+        currency: j['currency'] as String? ?? 'ETB',
+      );
+}
+
+/// A verified official document of the property (title deed, lease contract, permit).
+class PropertyDocumentItem {
+  final String id;
+  final String documentType;
+  final String? documentNumber;
+  final String? issuingAuthority;
+  final String? issuedOn;
+  final String fileName;
+  final String? contentType;
+  final String? sha256;
+
+  const PropertyDocumentItem({
+    required this.id,
+    required this.documentType,
+    this.documentNumber,
+    this.issuingAuthority,
+    this.issuedOn,
+    required this.fileName,
+    this.contentType,
+    this.sha256,
+  });
+
+  bool get isImage => (contentType ?? '').startsWith('image/');
+
+  static String typeLabel(String t) => const {
+        'TITLE_DEED': 'Title deed / ownership certificate',
+        'LEASE_AGREEMENT': 'Land lease contract',
+        'BUILDING_PERMIT': 'Building permit',
+        'OCCUPANCY_PERMIT': 'Occupancy permit',
+      }[t] ?? 'Other document';
+
+  factory PropertyDocumentItem.fromJson(Map<String, dynamic> j) => PropertyDocumentItem(
+        id: j['id'].toString(),
+        documentType: j['documentType'] as String? ?? 'OTHER',
+        documentNumber: j['documentNumber'] as String?,
+        issuingAuthority: j['issuingAuthority'] as String?,
+        issuedOn: j['issuedOn']?.toString(),
+        fileName: j['fileName'] as String? ?? 'document',
+        contentType: j['contentType'] as String?,
+        sha256: j['sha256'] as String?,
       );
 }
 
@@ -129,6 +275,13 @@ class CreatePurchaseOrderRequest {
   final int? requestedTenureMonths;
   final AgreementSignature promiseToPurchase;
 
+  /// Signs the Reservation Deposit Terms with the order so the deposit can be paid right away.
+  final AgreementSignature? depositTerms;
+  final String? depositPaymentMethod;
+
+  /// 'USD' pays an ETB deposit by international card at the platform's rate.
+  final String? depositCurrency;
+
   const CreatePurchaseOrderRequest({
     required this.propertyId,
     required this.contactPhone,
@@ -140,6 +293,9 @@ class CreatePurchaseOrderRequest {
     this.financedAmount,
     this.requestedTenureMonths,
     required this.promiseToPurchase,
+    this.depositTerms,
+    this.depositPaymentMethod,
+    this.depositCurrency,
   });
 
   Map<String, dynamic> toJson() => {
@@ -156,6 +312,9 @@ class CreatePurchaseOrderRequest {
             if (requestedTenureMonths != null) 'requestedTenureMonths': requestedTenureMonths,
           },
         'promiseToPurchase': promiseToPurchase.toJson(),
+        if (depositTerms != null) 'depositTerms': depositTerms!.toJson(),
+        if (depositPaymentMethod != null) 'depositPaymentMethod': depositPaymentMethod,
+        if (depositCurrency != null) 'depositCurrency': depositCurrency,
       };
 }
 
@@ -296,7 +455,7 @@ class StatusHistoryEntry {
       );
 }
 
-/// Reservation deposit owed to the provider after seller acceptance.
+/// Reservation deposit owed to the provider, paid when the order is placed.
 class PurchaseDeposit {
   final double amount;
   final String currency;
@@ -315,6 +474,14 @@ class PurchaseDeposit {
   final String? refundReference;
   final String? waiveReason;
 
+  /// The method the buyer picked on our side, if any.
+  final String? preferredMethod;
+
+  /// Set when an ETB deposit was paid in USD: the ETB amount and the rate used.
+  final double? baseAmount;
+  final String? baseCurrency;
+  final double? exchangeRate;
+
   const PurchaseDeposit({
     required this.amount,
     required this.currency,
@@ -332,6 +499,10 @@ class PurchaseDeposit {
     required this.checkoutAvailable,
     this.refundReference,
     this.waiveReason,
+    this.preferredMethod,
+    this.baseAmount,
+    this.baseCurrency,
+    this.exchangeRate,
   });
 
   bool get isSettled => status == 'PAID' || status == 'WAIVED';
@@ -354,6 +525,10 @@ class PurchaseDeposit {
         checkoutAvailable: j['checkoutAvailable'] == true,
         refundReference: j['refundReference'] as String?,
         waiveReason: j['waiveReason'] as String?,
+        preferredMethod: j['preferredMethod'] as String?,
+        baseAmount: _dn(j['baseAmount']),
+        baseCurrency: j['baseCurrency'] as String?,
+        exchangeRate: _dn(j['exchangeRate']),
       );
 }
 
@@ -480,10 +655,10 @@ class PurchaseOrderLabels {
   static String statusHelp(String s) => const {
         'PENDING_SELLER_REVIEW': 'Your order has been sent to the seller. They can accept or decline it.',
         'AWAITING_FINANCING': 'The seller accepted. The bank is now reviewing your loan application.',
-        'FINANCING_APPROVED': 'The bank approved your financing. Arrange payment with the seller.',
+        'FINANCING_APPROVED': 'The bank approved your financing. Pay your share of the balance below.',
         'FINANCING_PARTIALLY_APPROVED': 'The bank approved a smaller loan than requested. Decide how to proceed below.',
         'FINANCING_REJECTED': 'The bank declined the loan. You can re-apply for less, continue without a loan, or cancel.',
-        'AWAITING_PAYMENT': 'Arrange payment with the seller. They will mark the sale complete once paid.',
+        'AWAITING_PAYMENT': 'Pay the service fee and the balance below. The seller completes the sale once everything is paid.',
         'COMPLETED': 'The sale is complete. Congratulations!',
         'CANCELLED': 'You cancelled this order.',
         'REJECTED': 'The seller declined this order.',
@@ -519,4 +694,221 @@ class PurchaseOrderLabels {
         'REFUND_PENDING': 'Refund pending',
         'REFUNDED': 'Refunded',
       }[s] ?? s;
+}
+
+// ---------------------------------------------------------------- balance and service fee
+
+class BalanceInstalment {
+  final int sequence;
+  final String label;
+  final double amount;
+  final String? dueDate;
+  final double covered;
+  final bool paid;
+  final bool overdue;
+
+  const BalanceInstalment({
+    required this.sequence,
+    required this.label,
+    required this.amount,
+    this.dueDate,
+    required this.covered,
+    required this.paid,
+    required this.overdue,
+  });
+
+  factory BalanceInstalment.fromJson(Map<String, dynamic> j) => BalanceInstalment(
+        sequence: _i(j['sequence']),
+        label: j['label'] as String? ?? '',
+        amount: _d(j['amount']),
+        dueDate: j['dueDate']?.toString(),
+        covered: _d(j['covered']),
+        paid: j['paid'] == true,
+        overdue: j['overdue'] == true,
+      );
+}
+
+class BalancePayment {
+  final String id;
+  final String channel;
+  final String purpose;
+  final String status;
+  final double amount;
+  final String currency;
+  final String? checkoutUrl;
+  final String? preferredMethod;
+  final String? paymentMethod;
+  final String? reference;
+  final String? paidOn;
+  final bool hasSlip;
+  final String? note;
+  final DateTime? createdAt;
+
+  const BalancePayment({
+    required this.id,
+    required this.channel,
+    required this.purpose,
+    required this.status,
+    required this.amount,
+    required this.currency,
+    this.checkoutUrl,
+    this.preferredMethod,
+    this.paymentMethod,
+    this.reference,
+    this.paidOn,
+    this.hasSlip = false,
+    this.note,
+    this.createdAt,
+  });
+
+  factory BalancePayment.fromJson(Map<String, dynamic> j) => BalancePayment(
+        id: j['id'].toString(),
+        channel: j['channel'] as String? ?? 'ONLINE',
+        purpose: j['purpose'] as String? ?? 'BALANCE',
+        status: j['status'] as String? ?? '',
+        amount: _d(j['amount']),
+        currency: j['currency'] as String? ?? 'ETB',
+        checkoutUrl: j['checkoutUrl'] as String?,
+        preferredMethod: j['preferredMethod'] as String?,
+        paymentMethod: j['paymentMethod'] as String?,
+        reference: j['reference'] as String?,
+        paidOn: j['paidOn']?.toString(),
+        hasSlip: j['hasSlip'] == true,
+        note: j['note'] as String?,
+        createdAt: _dt(j['createdAt']),
+      );
+}
+
+class ProviderBankAccount {
+  final String? bankName;
+  final String? accountName;
+  final String? accountNumber;
+  final String? branch;
+  const ProviderBankAccount({this.bankName, this.accountName, this.accountNumber, this.branch});
+  factory ProviderBankAccount.fromJson(Map<String, dynamic> j) => ProviderBankAccount(
+        bankName: j['bankName'] as String?,
+        accountName: j['accountName'] as String?,
+        accountNumber: j['accountNumber'] as String?,
+        branch: j['branch'] as String?,
+      );
+}
+
+class BalanceFees {
+  final double markupPercent;
+  final double markupAmount;
+  final double vatRate;
+  final double vatAmount;
+  final double total;
+  final double paid;
+  final double inProgress;
+  final double remaining;
+  final bool fullyPaid;
+
+  const BalanceFees({
+    required this.markupPercent,
+    required this.markupAmount,
+    required this.vatRate,
+    required this.vatAmount,
+    required this.total,
+    required this.paid,
+    required this.inProgress,
+    required this.remaining,
+    required this.fullyPaid,
+  });
+
+  /// What can be paid now: remaining minus payments waiting for Chapa or a confirmation.
+  double get room => (remaining - inProgress).clamp(0, double.infinity).toDouble();
+
+  factory BalanceFees.fromJson(Map<String, dynamic> j) => BalanceFees(
+        markupPercent: _d(j['markupPercent']),
+        markupAmount: _d(j['markupAmount']),
+        vatRate: _d(j['vatRate']),
+        vatAmount: _d(j['vatAmount']),
+        total: _d(j['total']),
+        paid: _d(j['paid']),
+        inProgress: _d(j['inProgress']),
+        remaining: _d(j['remaining']),
+        fullyPaid: j['fullyPaid'] == true,
+      );
+}
+
+/// The balance of an order (price − deposit − loan) and the service fee, paid to the provider
+/// once the seller accepts: online through Chapa in parts, or by bank transfer with a receipt.
+class PurchaseBalance {
+  final String currency;
+  final double listedPrice;
+  final double depositCredit;
+  final double loanAmount;
+  final double balanceDue;
+  final double paid;
+  final double inProgress;
+  final double remaining;
+  final bool fullyPaid;
+  final bool payable;
+  final bool checkoutAvailable;
+  final List<String> paymentMethods;
+  final ProviderBankAccount? bankAccount;
+  final String transferReference;
+  final List<BalanceInstalment> instalments;
+  final List<BalancePayment> payments;
+  final BalanceFees? fees;
+
+  const PurchaseBalance({
+    required this.currency,
+    required this.listedPrice,
+    required this.depositCredit,
+    required this.loanAmount,
+    required this.balanceDue,
+    required this.paid,
+    required this.inProgress,
+    required this.remaining,
+    required this.fullyPaid,
+    required this.payable,
+    required this.checkoutAvailable,
+    required this.paymentMethods,
+    this.bankAccount,
+    required this.transferReference,
+    required this.instalments,
+    required this.payments,
+    this.fees,
+  });
+
+  double get room => (remaining - inProgress).clamp(0, double.infinity).toDouble();
+
+  factory PurchaseBalance.fromJson(Map<String, dynamic> j) => PurchaseBalance(
+        currency: j['currency'] as String? ?? 'ETB',
+        listedPrice: _d(j['listedPrice']),
+        depositCredit: _d(j['depositCredit']),
+        loanAmount: _d(j['loanAmount']),
+        balanceDue: _d(j['balanceDue']),
+        paid: _d(j['paid']),
+        inProgress: _d(j['inProgress']),
+        remaining: _d(j['remaining']),
+        fullyPaid: j['fullyPaid'] == true,
+        payable: j['payable'] == true,
+        checkoutAvailable: j['checkoutAvailable'] == true,
+        paymentMethods: List<String>.from(j['paymentMethods'] as List? ?? DepositMethods.all),
+        bankAccount: j['bankAccount'] == null ? null : ProviderBankAccount.fromJson(j['bankAccount'] as Map<String, dynamic>),
+        transferReference: j['transferReference'] as String? ?? '',
+        instalments: (j['instalments'] as List? ?? []).map((e) => BalanceInstalment.fromJson(e as Map<String, dynamic>)).toList(),
+        payments: (j['payments'] as List? ?? []).map((e) => BalancePayment.fromJson(e as Map<String, dynamic>)).toList(),
+        fees: j['fees'] == null ? null : BalanceFees.fromJson(j['fees'] as Map<String, dynamic>),
+      );
+
+  static String paymentStatus(String s) => const {
+        'PENDING': 'Waiting for Chapa',
+        'SUBMITTED': 'Awaiting confirmation',
+        'PAID': 'Paid',
+        'FAILED': 'Failed',
+        'REJECTED': 'Rejected',
+        'CANCELLED': 'Cancelled',
+        'REFUND_PENDING': 'Refund due',
+        'REFUNDED': 'Refunded',
+      }[s] ?? s;
+
+  static String channel(String c) => const {
+        'ONLINE': 'Online',
+        'BANK_TRANSFER': 'Bank transfer',
+        'RECORDED': 'Recorded by seller',
+      }[c] ?? c;
 }

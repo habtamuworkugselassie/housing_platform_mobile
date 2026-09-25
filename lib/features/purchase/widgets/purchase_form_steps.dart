@@ -8,6 +8,7 @@ import '../../../core/utils/financing_math.dart';
 import '../../../core/utils/phone_number.dart';
 import '../../auth/widgets/country_code_phone_input.dart';
 import 'agreement_review_panel.dart';
+import 'purchase_payment_widgets.dart';
 
 // ---------------------------------------------------------------- shared bits
 
@@ -428,7 +429,10 @@ class PurchaseAgreementStep extends StatelessWidget {
   final PurchaseFormState form;
   final PurchaseFormNotifier notifier;
   final bool attempted;
-  const PurchaseAgreementStep({super.key, required this.form, required this.notifier, required this.attempted});
+
+  /// Downloads a verified property document for the buyer to check before signing.
+  final Future<List<int>> Function(PropertyDocumentItem doc)? loadDocument;
+  const PurchaseAgreementStep({super.key, required this.form, required this.notifier, required this.attempted, this.loadDocument});
 
   static String providerNameFrom(String content) {
     final m = RegExp(r'\*\*([^*]+)\*\*').firstMatch(content);
@@ -443,6 +447,10 @@ class PurchaseAgreementStep extends StatelessWidget {
       children: [
         stepHeader('Promise to Purchase Agreement',
             'Before your order is sent, you sign a Promise to Purchase with the platform provider. Please read the whole text.'),
+        if (agreement != null && loadDocument != null) ...[
+          PropertyDocumentsList(documents: form.preview?.documents ?? const [], loadFile: loadDocument!),
+          const SizedBox(height: 16),
+        ],
         if (agreement == null)
           const Text('The Promise to Purchase agreement is not available right now. Please try again later.', style: TextStyle(color: AppTheme.error))
         else
@@ -459,6 +467,26 @@ class PurchaseAgreementStep extends StatelessWidget {
             onAccepted: notifier.setAccepted,
             onSignatoryName: notifier.setSignatoryName,
           ),
+        // The Reservation Deposit Terms, signed with the same name so the deposit can be paid now.
+        if (agreement != null && form.depositTermsAgreement != null) ...[
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 12),
+          AgreementReviewPanel(
+            key: const Key('deposit-terms-panel'),
+            title: form.depositTermsAgreement!.title,
+            content: form.depositTermsAgreement!.content,
+            version: form.depositTermsAgreement!.version,
+            providerName: providerNameFrom(form.depositTermsAgreement!.content),
+            scrolledToEnd: form.depositScrolledToEnd,
+            accepted: form.depositAccepted,
+            signatoryName: form.signatoryName,
+            attempted: attempted,
+            onScrolledToEnd: notifier.setDepositScrolledToEnd,
+            onAccepted: notifier.setDepositAccepted,
+            onSignatoryName: notifier.setSignatoryName,
+          ),
+        ],
       ],
     );
   }
@@ -498,11 +526,31 @@ class PurchaseReviewStep extends StatelessWidget {
             Text('Financed ${money(split.financedAmount, currency)} (${(split.coverageRatio * 100).toStringAsFixed(1)}%), own contribution ${money(split.cashPortion, currency)}',
                 style: const TextStyle(color: AppTheme.textPrimary)),
             Text('${split.tenureMonths} months · ≈ ${money(split.installment, currency)}/month', style: const TextStyle(color: AppTheme.textSecondary)),
-          ] else ...[
+          ] else if (form.depositQuote == null) ...[
             const Text('Direct purchase', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
             const Text('Direct purchase without bank financing.', style: TextStyle(color: AppTheme.textSecondary)),
           ],
-        ], onEdit: form.financingAvailable ? () => notifier.goTo(WizardStep.financing) : null),
+          if (form.depositQuote != null) ...[
+            if (form.financingApplied) const SizedBox(height: 8),
+            Text('Reservation deposit ${money(form.depositQuote!.amount, form.depositQuote!.currency)}, paid now',
+                key: const Key('review-deposit'), style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+            Text(form.paymentMethod != null
+                    ? 'via ${DepositMethods.label(form.paymentMethod!)}'
+                    : 'Online payment is not available yet. The provider will contact you with payment instructions.',
+                style: const TextStyle(color: AppTheme.textSecondary)),
+          ],
+          if (form.preview?.fees != null) ...[
+            const SizedBox(height: 8),
+            Text('Service fee and VAT ${money(form.preview!.fees!.total, currency)}, due when the seller accepts',
+                key: const Key('review-fees'), style: const TextStyle(fontWeight: FontWeight.w700, color: AppTheme.textPrimary)),
+            Text('${FeeSummary.pct(form.preview!.fees!.markupPercent)} % service fee plus ${FeeSummary.pct(form.preview!.fees!.vatRate)} % VAT on the price and fee',
+                style: const TextStyle(color: AppTheme.textSecondary)),
+          ],
+        ], onEdit: form.depositQuote != null
+            ? () => notifier.goTo(WizardStep.payment)
+            : form.financingAvailable
+                ? () => notifier.goTo(WizardStep.financing)
+                : null),
         _section('Agreement', [
           const Row(children: [
             Icon(Icons.check_circle, size: 16, color: AppTheme.success),
@@ -510,6 +558,8 @@ class PurchaseReviewStep extends StatelessWidget {
             Text('Accepted', style: TextStyle(fontWeight: FontWeight.w700, color: AppTheme.success)),
           ]),
           Text('${form.promiseAgreement?.title} · version ${form.promiseAgreement?.version}', style: const TextStyle(color: AppTheme.textSecondary)),
+          if (form.depositTermsAgreement != null)
+            Text('${form.depositTermsAgreement!.title} · version ${form.depositTermsAgreement!.version}', style: const TextStyle(color: AppTheme.textSecondary)),
           Text('Signed as ${payload?.promiseToPurchase.signatoryFullName}', style: const TextStyle(color: AppTheme.textSecondary)),
         ], onEdit: () => notifier.goTo(WizardStep.agreement), editLabel: 'Re-read'),
         const SizedBox(height: 8),

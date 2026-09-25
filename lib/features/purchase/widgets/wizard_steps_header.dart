@@ -14,6 +14,7 @@ class WizardStepsHeader extends StatelessWidget {
         WizardStep.account: 'Account',
         WizardStep.contact: 'Contact',
         WizardStep.financing: 'Financing',
+        WizardStep.payment: 'Payment',
         WizardStep.agreement: 'Agreement',
         WizardStep.review: 'Review',
       }[s]!;
