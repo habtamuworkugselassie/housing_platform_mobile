@@ -67,6 +67,12 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
   double get _balanceRoom => _balance?.room ?? 0;
   double get _room => _purpose == 'FEES' ? _feesRoom : _balanceRoom;
 
+  /// An online payment also has to fit Chapa's per-payment maximum; transfers are not limited.
+  double get _payMax {
+    final max = _balance?.onlineMaxPerPayment;
+    return !_transfer && max != null && max < _room ? max : _room;
+  }
+
   void _set(PurchaseBalance b, {bool first = false}) {
     _balance = b;
     // Open with the service fee while it is due; afterwards keep the buyer's choice when possible.
@@ -74,7 +80,7 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
     if (_purpose == 'FEES' && _feesRoom <= 0) _purpose = 'BALANCE';
     if (_purpose == 'BALANCE' && _balanceRoom <= 0 && _feesRoom > 0) _purpose = 'FEES';
     final current = double.tryParse(_amount.text);
-    if (first || current == null || current > _room) _amount.text = _suggested().toStringAsFixed(0);
+    if (first || current == null || current > _payMax) _amount.text = _suggested().toStringAsFixed(0);
     if (_method == null && b.paymentMethods.length == 1) _method = b.paymentMethods.first;
   }
 
@@ -82,7 +88,7 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
   double _suggested() {
     final b = _balance;
     if (b == null) return 0;
-    if (_purpose == 'FEES') return _feesRoom;
+    if (_purpose == 'FEES') return _feesRoom < _payMax ? _feesRoom : _payMax;
     BalanceInstalment? next;
     for (final i in b.instalments) {
       if (!i.paid) {
@@ -91,7 +97,8 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
       }
     }
     final suggested = next != null ? next.amount - next.covered : b.remaining;
-    return suggested < _balanceRoom ? suggested : _balanceRoom;
+    final capped = suggested < _balanceRoom ? suggested : _balanceRoom;
+    return capped < _payMax ? capped : _payMax;
   }
 
   Future<void> _load({bool first = false}) async {
@@ -120,7 +127,7 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
 
   double? get _validAmount {
     final v = double.tryParse(_amount.text.trim());
-    if (v == null || v <= 0 || v > _room + 1e-9) return null;
+    if (v == null || v <= 0 || v > _payMax + 1e-9) return null;
     return (v * 100).roundToDouble() / 100;
   }
 
@@ -344,9 +351,9 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
         const SizedBox(height: 10),
       ],
       Row(children: [
-        Expanded(child: _choice(key: const Key('tab-online'), selected: !_transfer, title: 'Pay online', onTap: () => setState(() => _transfer = false))),
+        Expanded(child: _choice(key: const Key('tab-online'), selected: !_transfer, title: 'Pay online', onTap: () => _setTransfer(false))),
         const SizedBox(width: 12),
-        Expanded(child: _choice(key: const Key('tab-transfer'), selected: _transfer, title: 'Bank transfer', onTap: () => setState(() => _transfer = true))),
+        Expanded(child: _choice(key: const Key('tab-transfer'), selected: _transfer, title: 'Bank transfer', onTap: () => _setTransfer(true))),
       ]),
       const SizedBox(height: 10),
       TextField(
@@ -355,8 +362,15 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
         keyboardType: const TextInputType.numberWithOptions(decimal: true),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
         onChanged: (_) => setState(() {}),
-        decoration: fieldDecoration('Amount', helper: 'Up to ${money(_room, c)}. You can pay in several parts.'),
+        decoration: fieldDecoration('Amount', helper: 'Up to ${money(_payMax, c)}. You can pay in several parts.'),
       ),
+      if (!_transfer && b.onlineMaxPerPayment != null && _room > b.onlineMaxPerPayment!)
+        Padding(
+          key: const Key('online-limit'),
+          padding: const EdgeInsets.only(top: 4),
+          child: Text('Online payments are limited to ${money(b.onlineMaxPerPayment, c)} each. Pay the rest in more parts or by bank transfer.',
+              style: const TextStyle(fontSize: 11, color: Color(0xFFB45309))),
+        ),
       const SizedBox(height: 10),
       if (!_transfer) ...[
         if (!b.checkoutAvailable)
@@ -416,6 +430,12 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
       ],
     ];
   }
+
+  void _setTransfer(bool transfer) => setState(() {
+        _transfer = transfer;
+        final current = double.tryParse(_amount.text);
+        if (current == null || current > _payMax) _amount.text = _suggested().toStringAsFixed(0);
+      });
 
   Widget _choice({required Key key, required bool selected, required String title, String? subtitle, required VoidCallback onTap}) => InkWell(
         key: key,
