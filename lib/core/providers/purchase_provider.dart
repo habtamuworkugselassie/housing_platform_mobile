@@ -337,8 +337,12 @@ class PurchaseFormState {
 
 class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
   final PurchaseService _service;
+  /// The method saved on the buyer's profile; preselected when nothing is chosen yet.
+  final Future<String?> Function()? _savedMethod;
 
-  PurchaseFormNotifier(this._service, String propertyId) : super(PurchaseFormState(propertyId: propertyId));
+  PurchaseFormNotifier(this._service, String propertyId, {Future<String?> Function()? savedMethod})
+      : _savedMethod = savedMethod,
+        super(PurchaseFormState(propertyId: propertyId));
 
   /// Starts the wizard. Visitors (`requireAccount`) begin on the account step; the preview is
   /// public so financing offers and the agreement load either way.
@@ -356,8 +360,11 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
 
   Future<void> loadPreview() async {
     state = state.copyWith(loadingPreview: true, clearPreviewError: true);
+    // Fetched alongside the preview so the result is applied in the same state update.
+    final savedMethod = state.paymentMethod == null && _savedMethod != null ? _savedMethod!() : null;
     try {
       final preview = await _service.preview(state.propertyId, depositCurrency: state.depositCurrency);
+      final saved = savedMethod == null ? null : await savedMethod;
       var next = state.copyWith(preview: preview, loadingPreview: false);
       final offers = preview.financingOffers;
       if (offers.isNotEmpty) {
@@ -388,6 +395,9 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
       }
       if (next.paymentMethod != null && !(preview.deposit?.paymentMethods.contains(next.paymentMethod) ?? false)) {
         next = next.copyWith(clearPaymentMethod: true);
+      }
+      if (next.paymentMethod == null && saved != null && (preview.deposit?.paymentMethods.contains(saved) ?? false)) {
+        next = next.copyWith(paymentMethod: saved);
       }
       state = next;
     } catch (e) {
@@ -511,8 +521,10 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
         }
       }
       final message = e.toString();
-      if (message.contains('already have an open purchase order')) {
+      if (RegExp('already have (an open )?purchase order').hasMatch(message)) {
         state = state.copyWith(submitting: false, submitError: 'You already have an open purchase order for this property.');
+        // The preview now carries that order, so the screen switches to a link to it.
+        await loadPreview();
       } else if (message.contains('Promise to Purchase agreement has changed') ||
           message.contains('Reservation Deposit Terms have changed')) {
         // The text changed under the buyer: reload it and make them read it again.
@@ -553,5 +565,9 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
 
 /// One wizard per property visit.
 final purchaseFormProvider = StateNotifierProvider.autoDispose.family<PurchaseFormNotifier, PurchaseFormState, String>(
-  (ref, propertyId) => PurchaseFormNotifier(ref.read(purchaseServiceProvider), propertyId),
+  (ref, propertyId) => PurchaseFormNotifier(
+    ref.read(purchaseServiceProvider),
+    propertyId,
+    savedMethod: () => ref.read(savedPaymentMethodProvider.future),
+  ),
 );

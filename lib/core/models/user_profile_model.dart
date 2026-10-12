@@ -14,6 +14,12 @@ class UserProfile {
   final String? organizationId;
   final bool enabled;
   final String? profileImageUrl;
+  /// False: no password yet (signed up while ordering, or with Google). Null: never recorded.
+  final bool? passwordSet;
+  /// Payment method preselected at checkout (TELEBIRR, CBE_BIRR, MPESA, AWASH_BIRR, CARD).
+  final String? preferredPaymentMethod;
+  /// Mobile-money number Chapa is prefilled with for wallet payments.
+  final String? paymentPhone;
 
   const UserProfile({
     required this.id,
@@ -30,11 +36,20 @@ class UserProfile {
     this.organizationId,
     this.enabled = true,
     this.profileImageUrl,
+    this.passwordSet,
+    this.preferredPaymentMethod,
+    this.paymentPhone,
   });
 
   String get fullName => '$firstName $lastName'.trim();
 
   bool get isBuyer => roles.any((r) => r.toUpperCase() == 'BUYER');
+
+  bool get hasPassword => passwordSet == true;
+
+  /// Mirrors the server: a known password must be confirmed, and so must a staff account whose
+  /// state was never recorded. A buyer who signed up while ordering just picks one.
+  bool get needsCurrentPassword => passwordSet ?? !(roles.length == 1 && roles.first == 'BUYER');
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
     final rolesRaw = json['roles'];
@@ -59,6 +74,9 @@ class UserProfile {
       organizationId: json['organizationId']?.toString(),
       enabled: json['enabled'] as bool? ?? true,
       profileImageUrl: json['profileImageUrl'] as String?,
+      passwordSet: json['passwordSet'] as bool?,
+      preferredPaymentMethod: json['preferredPaymentMethod'] as String?,
+      paymentPhone: json['paymentPhone'] as String?,
     );
   }
 }

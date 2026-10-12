@@ -96,6 +96,9 @@ class PurchasePreview {
   /// Verified official documents (Annex A of the Promise to Purchase); signed-in users only.
   final List<PropertyDocumentItem> documents;
 
+  /// The signed-in buyer's open order on this property; only one may be open at a time.
+  final ExistingPurchaseOrder? existingOrder;
+
   const PurchasePreview({
     required this.propertyId,
     required this.listedPrice,
@@ -107,6 +110,7 @@ class PurchasePreview {
     this.deposit,
     this.fees,
     this.documents = const [],
+    this.existingOrder,
   });
 
   factory PurchasePreview.fromJson(Map<String, dynamic> j) => PurchasePreview(
@@ -120,6 +124,22 @@ class PurchasePreview {
         deposit: j['deposit'] == null ? null : DepositQuote.fromJson(j['deposit'] as Map<String, dynamic>),
         fees: j['fees'] == null ? null : FeeQuote.fromJson(j['fees'] as Map<String, dynamic>),
         documents: (j['documents'] as List? ?? []).map((e) => PropertyDocumentItem.fromJson(e as Map<String, dynamic>)).toList(),
+        existingOrder: j['existingOrder'] is Map<String, dynamic>
+            ? ExistingPurchaseOrder.fromJson(j['existingOrder'] as Map<String, dynamic>)
+            : null,
+      );
+}
+
+class ExistingPurchaseOrder {
+  final String id;
+  final String orderNumber;
+  final String status;
+  const ExistingPurchaseOrder({required this.id, required this.orderNumber, required this.status});
+
+  factory ExistingPurchaseOrder.fromJson(Map<String, dynamic> j) => ExistingPurchaseOrder(
+        id: j['id'].toString(),
+        orderNumber: j['orderNumber'] as String? ?? '',
+        status: j['status'] as String? ?? '',
       );
 }
 

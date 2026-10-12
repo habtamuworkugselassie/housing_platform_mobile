@@ -245,9 +245,17 @@ void main() {
     test('maps a duplicate-order error to a friendly message', () async {
       await n.init(user: buyer);
       fillValid(n);
-      service.createError = const ValidationException('You already have an open purchase order for this property');
+      service.createError = const ValidationException(
+          'You already have purchase order PPO-1 for this property. Open it from My purchases instead of placing another.');
+      service.previewResult = PurchasePreview.fromJson({
+        'propertyId': 'prop-1',
+        'listedPrice': 8500000,
+        'existingOrder': {'id': 'o-1', 'orderNumber': 'PPO-1', 'status': 'PENDING_SELLER_REVIEW'},
+      });
       expect(await n.submit(), isNull);
       expect(n.state.submitError, contains('already have an open purchase order'));
+      // Reloaded, so the screen can link to the order that already exists.
+      expect(n.state.preview?.existingOrder?.id, 'o-1');
     });
 
     test('reloads and returns to the agreement when the text changed under the buyer', () async {
