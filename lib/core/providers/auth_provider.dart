@@ -254,3 +254,10 @@ class AuthNotifier extends StateNotifier<AuthState> {
 final authProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref) {
   return AuthNotifier(ref.read(authServiceProvider), ref.read(userServiceProvider));
 });
+
+/// The payment method saved on the signed-in user's profile, or null (signed out, none saved,
+/// or the profile could not be read). Kept for the session; invalidate after changing it.
+final savedPaymentMethodProvider = FutureProvider<String?>((ref) async {
+  if (!ref.watch(authProvider).isAuthenticated) return null;
+  return ref.read(userServiceProvider).preferredPaymentMethod();
+});

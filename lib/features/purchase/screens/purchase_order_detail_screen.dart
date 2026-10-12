@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/purchase_model.dart';
 import '../../../core/network/api_exceptions.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/purchase_provider.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/utils/financing_math.dart';
@@ -116,10 +117,14 @@ class _PurchaseOrderDetailScreenState extends ConsumerState<PurchaseOrderDetailS
     });
     try {
       final order = await ref.read(purchaseServiceProvider).getById(widget.orderId);
+      // The order's own choice wins; otherwise the method saved on the buyer's profile.
+      final saved = _depositMethod == null && order.deposit != null && order.deposit!.currency != 'USD' && order.deposit!.preferredMethod == null
+          ? await ref.read(savedPaymentMethodProvider.future)
+          : null;
       if (mounted) {
         setState(() {
           _order = order;
-          _depositMethod ??= order.deposit?.currency == 'USD' ? 'CARD' : order.deposit?.preferredMethod;
+          _depositMethod ??= order.deposit?.currency == 'USD' ? 'CARD' : (order.deposit?.preferredMethod ?? saved);
         });
       }
       // Documents are secondary: the order still shows if they fail to load.

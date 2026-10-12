@@ -6,6 +6,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/purchase_model.dart';
 import '../../../core/network/api_exceptions.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/purchase_provider.dart';
 import '../../../core/theme/theme.dart';
 import 'purchase_form_steps.dart' show money, fieldDecoration;
@@ -104,7 +105,13 @@ class _BalanceSectionState extends ConsumerState<BalanceSection> with WidgetsBin
   Future<void> _load({bool first = false}) async {
     try {
       final b = await ref.read(purchaseServiceProvider).getBalance(widget.orderId);
-      if (mounted) setState(() => _set(b, first: first));
+      final saved = first ? await ref.read(savedPaymentMethodProvider.future) : null;
+      if (mounted) {
+        setState(() {
+          if (_method == null && saved != null && b.paymentMethods.contains(saved)) _method = saved;
+          _set(b, first: first);
+        });
+      }
     } catch (_) {
       // No balance yet (older orders) or not visible: the section stays hidden.
     }

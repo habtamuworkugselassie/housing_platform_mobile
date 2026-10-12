@@ -12,6 +12,8 @@ import '../../../core/providers/root_tab_provider.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/network/media_helper.dart';
 import '../screens/edit_profile_screen.dart';
+import 'password_screen.dart';
+import 'payment_preferences_screen.dart';
 
 /// Profile screen: view profile, edit, logout. Accessible from bottom nav when logged in.
 class ProfileScreen extends ConsumerWidget {
@@ -142,6 +144,20 @@ class _ProfileContent extends ConsumerWidget {
                 padding: const EdgeInsets.symmetric(vertical: 14),
               ),
             ),
+          ),
+          const SizedBox(height: 12),
+          _ProfileAction(
+            key: const Key('profile-password'),
+            icon: LucideIcons.keyRound,
+            label: profile.hasPassword ? 'Change password' : 'Set a password',
+            onPressed: () => _openAndRefresh(context, ref, PasswordScreen(profile: profile)),
+          ),
+          const SizedBox(height: 12),
+          _ProfileAction(
+            key: const Key('profile-payment'),
+            icon: LucideIcons.wallet,
+            label: 'Payment method',
+            onPressed: () => _openAndRefresh(context, ref, PaymentPreferencesScreen(profile: profile)),
           ),
           const SizedBox(height: 32),
           OutlinedButton(
@@ -413,6 +429,35 @@ class _AccountCard extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+Future<void> _openAndRefresh(BuildContext context, WidgetRef ref, Widget screen) async {
+  final updated = await Navigator.of(context).push<UserProfile>(MaterialPageRoute(builder: (_) => screen));
+  if (updated != null && context.mounted) ref.invalidate(profileProvider);
+}
+
+class _ProfileAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  const _ProfileAction({super.key, required this.icon, required this.label, required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 18),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppTheme.primaryColor,
+          side: const BorderSide(color: AppTheme.primaryColor),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+        ),
       ),
     );
   }

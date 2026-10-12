@@ -41,6 +41,33 @@ class UserService {
     return UserProfile.fromJson(response.data as Map<String, dynamic>);
   }
 
+  /// POST /users/me/password — set a first password, or change the current one.
+  Future<UserProfile> changePassword({String? currentPassword, required String newPassword}) async {
+    final response = await _apiClient.post('/users/me/password', data: {
+      if (currentPassword != null) 'currentPassword': currentPassword,
+      'newPassword': newPassword,
+    });
+    return UserProfile.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// PUT /users/me/payment-preferences — preferred method and mobile-money number; null clears.
+  Future<UserProfile> updatePaymentPreferences({String? method, String? phone}) async {
+    final response = await _apiClient.put('/users/me/payment-preferences', data: {
+      'preferredPaymentMethod': method,
+      'paymentPhone': phone,
+    });
+    return UserProfile.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  /// The saved payment method, or null when there is none or the profile cannot be read.
+  Future<String?> preferredPaymentMethod() async {
+    try {
+      return (await getMe()).preferredPaymentMethod;
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// DELETE /users/me — permanently delete the signed-in user's account (irreversible).
   Future<void> deleteAccount() async {
     await _apiClient.delete('/users/me');
