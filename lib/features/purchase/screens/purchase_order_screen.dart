@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/property_model.dart';
+import '../../../core/models/purchase_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/purchase_provider.dart';
 import '../../../core/theme/theme.dart';
@@ -102,6 +103,8 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
         }
         if (form.preview == null) return const SizedBox.shrink();
         final preview = form.preview!;
+        final existing = preview.existingOrder;
+        if (existing != null) return _existingOrder(existing);
         return Column(
           children: [
             Expanded(
@@ -147,7 +150,10 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
           ],
         );
       }),
-      bottomNavigationBar: form.preview == null || form.step == WizardStep.account || (auth.isAuthenticated && !isBuyer)
+      bottomNavigationBar: form.preview == null ||
+              form.preview!.existingOrder != null ||
+              form.step == WizardStep.account ||
+              (auth.isAuthenticated && !isBuyer)
           ? null
           : _NavBar(form: form, notifier: notifier, busy: _redirecting, onPrimary: () => _primary(notifier, form)),
     );
@@ -176,6 +182,39 @@ class _PurchaseOrderScreenState extends ConsumerState<PurchaseOrderScreen> {
         return PurchaseReviewStep(form: form, notifier: notifier, propertyTitle: widget.property.title);
     }
   }
+
+  /// One open order per buyer and property: send them to the one they have.
+  Widget _existingOrder(ExistingPurchaseOrder order) => Center(
+        key: const Key('existing-order'),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'You already have purchase order ${order.orderNumber} for this property',
+                textAlign: TextAlign.center,
+                style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16, color: AppTheme.textPrimary),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                'Only one order per property can be open at a time. Continue with your existing order, or place a new one if it is cancelled, rejected or expires.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              const SizedBox(height: 16),
+              FilledButton(
+                key: const Key('existing-order-view'),
+                onPressed: () => Navigator.of(context).pushReplacement(
+                  MaterialPageRoute(builder: (_) => PurchaseOrderDetailScreen(orderId: order.id)),
+                ),
+                style: FilledButton.styleFrom(backgroundColor: AppTheme.primaryColor, foregroundColor: Colors.white),
+                child: const Text('View my order'),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _message(String text, {VoidCallback? retry}) => Center(
         child: Padding(

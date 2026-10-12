@@ -521,8 +521,10 @@ class PurchaseFormNotifier extends StateNotifier<PurchaseFormState> {
         }
       }
       final message = e.toString();
-      if (message.contains('already have an open purchase order')) {
+      if (RegExp('already have (an open )?purchase order').hasMatch(message)) {
         state = state.copyWith(submitting: false, submitError: 'You already have an open purchase order for this property.');
+        // The preview now carries that order, so the screen switches to a link to it.
+        await loadPreview();
       } else if (message.contains('Promise to Purchase agreement has changed') ||
           message.contains('Reservation Deposit Terms have changed')) {
         // The text changed under the buyer: reload it and make them read it again.
