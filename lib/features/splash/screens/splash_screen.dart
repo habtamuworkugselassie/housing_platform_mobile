@@ -75,14 +75,14 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: 40),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxBannerWidth),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                        padding: const EdgeInsets.only(top: 16, bottom: 24),
                         child: Image.asset(
                           'assets/branding/ethio-build-connect-wordmark.png',
                           height: 64,
