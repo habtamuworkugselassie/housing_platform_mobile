@@ -8,6 +8,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/custom_back_button.dart';
 import '../widgets/country_code_phone_input.dart';
 import '../../marketplace/screens/root_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 /// Unified auth screen with Login and Register tabs (aligned with frontend).
 /// Supports Buyer and other roles; country code + phone validation.
@@ -42,6 +43,10 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+    // The header title reads the tab index, so rebuild when the tab changes.
+    _tabController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -151,96 +156,65 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
     });
 
     return Scaffold(
-      backgroundColor: AppTheme.scaffoldBackgroundColor,
+      backgroundColor: AppTheme.violet50,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: const Text('Sign in',
-            style: TextStyle(color: AppTheme.textPrimary)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        bottom: TabBar(
-          controller: _tabController,
-          labelColor: AppTheme.primaryColor,
-          unselectedLabelColor: AppTheme.textSecondary,
-          tabs: const [
-            Tab(text: 'Login'),
-            Tab(text: 'Register'),
-          ],
-        ),
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Column(
         children: [
-          _buildLoginTab(authState.isLoading),
-          _buildRegisterTab(authState.isLoading),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const EyebrowPill('Your account'),
+                const SizedBox(height: 12),
+                Text(
+                  _tabController.index == 0 ? 'Welcome back' : 'Create your account',
+                  style: Theme.of(context).textTheme.headlineMedium,
+                ),
+                const SizedBox(height: 16),
+                _buildTabSwitch(),
+              ],
+            ),
+          ),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                _buildLoginTab(authState.isLoading),
+                _buildRegisterTab(authState.isLoading),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  /// Login / Register as a pill segmented control, like the web form toggle.
+  Widget _buildTabSwitch() {
+    return AnimatedBuilder(
+      animation: _tabController,
+      builder: (context, _) => _SegmentedPill(
+        labels: const ['Login', 'Register'],
+        selected: _tabController.index,
+        onChanged: (i) => _tabController.animateTo(i),
       ),
     );
   }
 
   Widget _buildLoginTab(bool loading) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      child: _FormCard(
         children: [
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: Material(
-                  color: _loginWithEmail
-                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => setState(() => _loginWithEmail = true),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Text(
-                          'Email',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: _loginWithEmail
-                                ? AppTheme.primaryColor
-                                : AppTheme.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Material(
-                  color: !_loginWithEmail
-                      ? AppTheme.primaryColor.withValues(alpha: 0.15)
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(12),
-                  child: InkWell(
-                    onTap: () => setState(() => _loginWithEmail = false),
-                    borderRadius: BorderRadius.circular(12),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Center(
-                        child: Text(
-                          'Phone',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: !_loginWithEmail
-                                ? AppTheme.primaryColor
-                                : AppTheme.textSecondary,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+          _SegmentedPill(
+            labels: const ['Email', 'Phone number'],
+            selected: _loginWithEmail ? 0 : 1,
+            onChanged: (i) => setState(() => _loginWithEmail = i == 0),
           ),
           const SizedBox(height: 20),
           if (_loginWithEmail)
@@ -311,11 +285,9 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
 
   Widget _buildRegisterTab(bool loading) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 32),
+      child: _FormCard(
         children: [
-          const SizedBox(height: 16),
           Row(
             children: [
               Expanded(
@@ -423,6 +395,75 @@ class _AuthScreenState extends ConsumerState<AuthScreen>
                         strokeWidth: 2, color: Colors.white))
                 : const Text('Create account'),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+/// White floating card the auth forms sit in (web: the rounded-3xl card on the violet canvas).
+class _FormCard extends StatelessWidget {
+  final List<Widget> children;
+  const _FormCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusPanel),
+        border: Border.all(color: AppTheme.borderColor),
+        boxShadow: AppTheme.cardShadow,
+      ),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: children),
+    );
+  }
+}
+
+/// Pill segmented control: grey track, white raised segment for the selection.
+class _SegmentedPill extends StatelessWidget {
+  final List<String> labels;
+  final int selected;
+  final ValueChanged<int> onChanged;
+  const _SegmentedPill({required this.labels, required this.selected, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF3F4F6),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppTheme.borderColor),
+      ),
+      child: Row(
+        children: [
+          for (var i = 0; i < labels.length; i++)
+            Expanded(
+              child: GestureDetector(
+                onTap: () => onChanged(i),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  decoration: BoxDecoration(
+                    color: selected == i ? AppTheme.surfaceColor : Colors.transparent,
+                    borderRadius: BorderRadius.circular(999),
+                    boxShadow: selected == i ? AppTheme.cardShadow : null,
+                  ),
+                  child: Center(
+                    child: Text(
+                      labels[i],
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: selected == i ? AppTheme.textPrimary : AppTheme.textSecondary,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
         ],
       ),
     );

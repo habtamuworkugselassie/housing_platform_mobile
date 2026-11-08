@@ -30,17 +30,8 @@ class PropertyCard extends StatelessWidget {
       child: Container(
         width: 280,
         margin: const EdgeInsets.only(right: 16, bottom: 8),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(((0.05) * 255).toInt()),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
-        ),
+        clipBehavior: Clip.antiAlias,
+        decoration: AppTheme.cardDecoration,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -87,16 +78,18 @@ class PropertyCard extends StatelessWidget {
                     left: 12,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 12, vertical: 6),
+                          horizontal: 10, vertical: 5),
                       decoration: BoxDecoration(
-                        color: AppTheme.primaryColor,
-                        borderRadius: BorderRadius.circular(12),
+                        color: AppTheme.goldBright,
+                        borderRadius: BorderRadius.circular(999),
                       ),
                       child: Text(
-                        'Featured',
+                        'FEATURED',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              color: AppTheme.brandDeep,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: 0.8,
+                              fontSize: 10,
                             ),
                       ),
                     ),
@@ -150,8 +143,8 @@ class PropertyCard extends StatelessWidget {
                     Text(
                       '\$${property.price.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColorDark,
+                            fontWeight: FontWeight.w800,
                           ),
                     ),
                     Row(
@@ -254,23 +247,14 @@ class PropertyCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(((0.04) * 255).toInt()),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
+        clipBehavior: Clip.antiAlias,
+        decoration: AppTheme.cardDecoration,
         child: Row(
           children: [
             // Image Left Side
             ClipRRect(
               borderRadius:
-                  const BorderRadius.horizontal(left: Radius.circular(16)),
+                  const BorderRadius.horizontal(left: Radius.circular(AppTheme.radiusCard)),
               child: PropertyImage(
                 imageUrl: property.imageUrl,
                 propertyType: property.type,
@@ -295,8 +279,8 @@ class PropertyCard extends StatelessWidget {
                               Flexible(
                                 child: Text(
                                   property.title,
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                  maxLines: 1,
+                                  style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700, height: 1.2),
+                                  maxLines: 2,
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -371,8 +355,8 @@ class PropertyCard extends StatelessWidget {
                     Text(
                       '\$${property.price.toStringAsFixed(0)}',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: AppTheme.primaryColor,
-                            fontWeight: FontWeight.bold,
+                            color: AppTheme.primaryColorDark,
+                            fontWeight: FontWeight.w800,
                           ),
                     ),
                     const SizedBox(height: 8),

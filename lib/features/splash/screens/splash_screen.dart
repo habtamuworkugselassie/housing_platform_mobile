@@ -6,6 +6,7 @@ import '../../../core/models/sponsored_organization_model.dart';
 import '../../../core/providers/sponsorship_provider.dart';
 import '../../../core/theme/theme.dart';
 import '../../marketplace/screens/root_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({Key? key}) : super(key: key);
@@ -64,9 +65,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0xFF140F2C),
-                    Color(0xFF1A1336),
-                    Color(0xFF241A4A),
+                    AppTheme.brandDeep,
+                    AppTheme.brandDeep,
+                    AppTheme.brandPanel,
                   ],
                 ),
               ),
@@ -80,9 +81,12 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxBannerWidth),
-                      child: Image.asset(
-                        'assets/branding/ethio-build-connect-banner.png',
-                        fit: BoxFit.contain,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                        child: Image.asset(
+                          'assets/branding/ethio-build-connect-banner.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                     ),
                   ),
@@ -121,7 +125,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                                 height: 8,
                                 decoration: BoxDecoration(
                                   color: _currentPage == i
-                                      ? Colors.white
+                                      ? AppTheme.goldBright
                                       : Colors.white.withValues(alpha: 0.4),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
@@ -134,18 +138,10 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-                  child: ElevatedButton(
+                  child: GoldButton(
+                    label: 'Enter',
+                    expand: true,
                     onPressed: _dismissing ? null : _dismiss,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.primaryColor,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 2,
-                    ),
-                    child: const Text('Enter'),
                   ),
                 ),
               ],
@@ -233,16 +229,16 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(8),
+                  color: AppTheme.goldBright,
+                  borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   org.sponsorshipType.toUpperCase(),
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.brandDeep,
                     fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1,
                   ),
                 ),
               ),
@@ -266,7 +262,7 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
 
   Widget _placeholderContent(SponsoredOrganizationModel org) {
     return Container(
-      color: const Color(0xFF27272A),
+      color: AppTheme.brandPanel,
       child: Center(
         child: org.logoUrl != null && org.logoUrl!.trim().isNotEmpty
             ? Image.network(

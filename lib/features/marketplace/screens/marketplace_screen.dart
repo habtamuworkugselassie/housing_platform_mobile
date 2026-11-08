@@ -3,6 +3,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/theme/theme.dart';
 import '../../../core/widgets/custom_back_button.dart';
 import 'organization_list_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 /// Marketplace categories matching the frontend: organizations grouped by type.
 /// Tapping a category opens the organization list for that type.
@@ -44,20 +45,18 @@ class MarketplaceScreen extends StatelessWidget {
       backgroundColor: AppTheme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: const CustomBackButton(),
-        title: const Text('Marketplace'),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
         elevation: 0,
       ),
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: Text(
-              'Browse organizations by type',
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppTheme.textSecondary,
-                  ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 20),
+            child: SectionHeader(
+              eyebrow: 'Marketplace',
+              title: 'Browse by category',
+              subtitle: 'Approved organizations across the whole construction value chain.',
             ),
           ),
           ..._categories.map((cat) {
@@ -65,7 +64,11 @@ class MarketplaceScreen extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: Material(
                 color: AppTheme.surfaceColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                  side: const BorderSide(color: AppTheme.borderColor),
+                ),
                 child: InkWell(
                   onTap: () {
                     Navigator.push(
@@ -78,7 +81,7 @@ class MarketplaceScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(AppTheme.radiusCard),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
                     child: Row(
@@ -86,14 +89,14 @@ class MarketplaceScreen extends StatelessWidget {
                         Container(
                           width: 48,
                           height: 48,
-                          decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(12),
+                          decoration: const BoxDecoration(
+                            color: AppTheme.violet50,
+                            shape: BoxShape.circle,
                           ),
                           child: Icon(
                             _iconFor(cat['icon']!),
-                            color: AppTheme.primaryColor,
-                            size: 24,
+                            color: AppTheme.primaryColorDark,
+                            size: 22,
                           ),
                         ),
                         const SizedBox(width: 16),
@@ -102,7 +105,8 @@ class MarketplaceScreen extends StatelessWidget {
                             cat['label']!,
                             style: const TextStyle(
                               fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.2,
                               color: AppTheme.textPrimary,
                             ),
                           ),

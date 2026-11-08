@@ -6,6 +6,7 @@ import '../../../core/models/property_model.dart';
 import '../../../core/providers/property_provider.dart';
 import '../widgets/property_card.dart';
 import '../../property/screens/property_detail_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 /// Full list of properties (Explore tab). Used when user taps "See All" from Home.
 class ExploreScreen extends ConsumerStatefulWidget {
@@ -56,17 +57,10 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Explore',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Browse all available properties',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppTheme.textSecondary),
+                    const SectionHeader(
+                      eyebrow: 'Properties',
+                      title: 'Explore',
+                      subtitle: 'Browse every available listing from developers and agents.',
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -75,8 +69,16 @@ class _ExploreScreenState extends ConsumerState<ExploreScreen> {
                       decoration: InputDecoration(
                         hintText: 'Search properties...',
                         prefixIcon: const Icon(LucideIcons.search, color: AppTheme.textSecondary),
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(999)),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          borderSide: const BorderSide(color: AppTheme.borderColor),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(999),
+                          borderSide: const BorderSide(color: AppTheme.primaryColor, width: 2),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
                       ),
                     ),
                   ],

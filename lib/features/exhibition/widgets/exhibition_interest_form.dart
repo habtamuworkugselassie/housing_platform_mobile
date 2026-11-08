@@ -146,19 +146,6 @@ class _ExhibitionInterestFormState extends ConsumerState<ExhibitionInterestForm>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            'Register your interest',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppTheme.textPrimary,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Exhibitor or visitor — we\'ll contact you.',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppTheme.textSecondary),
-          ),
-          const SizedBox(height: 20),
           TextFormField(
             controller: _emailController,
             decoration: const InputDecoration(
