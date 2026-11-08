@@ -157,3 +157,83 @@ workflows:
     artifacts:
       - build/app/outputs/flutter-apk/ethio-build-connect.apk
       - build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
+
+  # ───────────────── Android → APKs → published on the website (automatic) ─────────────────
+  # Runs on every push to main. Builds the signed per-ABI APKs and commits them into the
+  # frontend repo's public/downloads/, whose own deploy then puts them live on
+  # ethiobuildconnect.et/download.html. Needs, besides the keystore, an environment variable
+  # group "github_publish" with GITHUB_TOKEN: a GitHub token that can push to
+  # habtamuworkugselassie/housing-platform-frontend (fine-grained, Contents: read & write).
+  android-apk-publish:
+    name: Android – APK → website (on push to main)
+    max_build_duration: 60
+    instance_type: linux_x2
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
+      cancel_previous_builds: true
+    environment:
+      android_signing:
+        - ethiobuildconnect_keystore
+      groups:
+        - github_publish
+      vars:
+        API_BASE_URL: "https://ethiobuildconnect.et/api/v1"
+        SITE_REPO: "habtamuworkugselassie/housing-platform-frontend"
+      flutter: stable
+    scripts:
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Prepare signing from the Codemagic keystore
+        script: |
+          cat > android/key.properties <<EOT
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOT
+      - name: Build APKs (one per CPU architecture)
+        script: |
+          BUILD_NAME=$(sed -n 's/^version: *\([^+[:space:]]*\).*/\1/p' pubspec.yaml)
+          BUILD_NUMBER=$(sed -n 's/^version: *[^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)
+          test -n "$BUILD_NAME" -a -n "$BUILD_NUMBER" || { echo "pubspec.yaml version must be <name>+<number>"; exit 1; }
+          echo "BUILD_NAME=$BUILD_NAME" >> "$CM_ENV"
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> "$CM_ENV"
+          echo "Building $BUILD_NAME ($BUILD_NUMBER)"
+          flutter build apk --release --split-per-abi \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/ethio-build-connect.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
+      - name: Publish the APKs to the website repo
+        script: |
+          set -e
+          if [ -z "${GITHUB_TOKEN:-}" ]; then
+            echo "GITHUB_TOKEN is not set in the github_publish group; APKs built but not published."
+            exit 1
+          fi
+          rm -rf site
+          git clone --depth 1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${SITE_REPO}.git" site
+          cp build/app/outputs/flutter-apk/ethio-build-connect.apk site/public/downloads/ethio-build-connect.apk
+          cp build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk site/public/downloads/ethio-build-connect-32bit.apk
+          # Keep the version chip on the download page in step with pubspec.yaml.
+          sed -i "s|id=\"verChip\">v[^<]*<|id=\"verChip\">v${BUILD_NAME}<|" site/public/download.html
+          cd site
+          git config user.name "Codemagic"
+          git config user.email "codemagic@ethiobuildconnect.et"
+          git add public/downloads public/download.html
+          if git diff --cached --quiet; then
+            echo "APKs unchanged; nothing to publish."
+            exit 0
+          fi
+          git commit -m "chore(download): app ${BUILD_NAME} (${BUILD_NUMBER}) from mobile ${CM_COMMIT:-$(git -C .. rev-parse --short HEAD)}"
+          git push origin HEAD:main
+          echo "Published ${BUILD_NAME} (${BUILD_NUMBER}); the site deploy picks it up from main."
+    artifacts:
+      - build/app/outputs/flutter-apk/ethio-build-connect.apk
+      - build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk

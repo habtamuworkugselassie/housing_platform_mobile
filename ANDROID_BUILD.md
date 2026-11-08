@@ -24,6 +24,20 @@ an installed app when both are signed with the same key, so every future release
 
 If the keystore is lost, users must uninstall before installing the next version.
 
+## Automatic release on push (Codemagic)
+
+The `android-apk-publish` workflow in `codemagic.yaml` runs on every push to `main`: it builds
+the signed per-ABI APKs and commits them into the frontend repo's `public/downloads/`
+(updating the version chip on `download.html`), and the site's own deploy puts them live.
+It needs two things in Codemagic:
+
+- the keystore uploaded under the reference name `ethiobuildconnect_keystore`;
+- an environment variable group `github_publish` containing `GITHUB_TOKEN` (secure), a
+  GitHub token allowed to push to `housing-platform-frontend` (fine-grained token, that
+  repository only, permission Contents: read and write).
+
+So a release is: bump `version:` in `pubspec.yaml`, merge to `main`, wait a few minutes.
+
 ## Prerequisites
 
 - Flutter SDK installed and on PATH
