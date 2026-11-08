@@ -15,6 +15,7 @@ import '../../auth/screens/auth_screen.dart';
 import '../../exhibition/widgets/exhibition_info_section.dart';
 
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/widgets/brand.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -115,11 +116,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildHeader(context),
-                const SponsorCarouselWidget(height: 220, autoplaySeconds: 5),
-                const SizedBox(height: 24),
+                const SizedBox(height: 4),
                 const ExhibitionInfoSection(),
-                const SizedBox(height: 16),
+                const SizedBox(height: 20),
+                const SponsorCarouselWidget(height: 236, autoplaySeconds: 5),
+                const SizedBox(height: 20),
                 _buildLiveBanner(context),
+                const SizedBox(height: 16),
+                _buildMarketplaceEntry(context),
                 const SizedBox(height: 24),
                 CategorySelector(
                   categories: categories,
@@ -187,35 +191,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => ref.read(rootTabIndexProvider.notifier).state = 3,
-        child: Container(
+        child: BrandPanel(
+          color: AppTheme.brandDeep,
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
           padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.borderColor),
-            gradient: const LinearGradient(
-              colors: [Color(0xFF3B1D5E), Color(0xFF241A4A)],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-          ),
           child: Row(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppTheme.error,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(LucideIcons.radio, color: Colors.white, size: 14),
-                    SizedBox(width: 6),
-                    Text('LIVE',
-                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ],
-                ),
-              ),
+              const LivePill(),
               const SizedBox(width: 14),
               Expanded(
                 child: Column(
@@ -224,15 +206,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     Text('Live from the exhibition',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: Colors.white,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w800,
                             )),
                     const SizedBox(height: 2),
-                    const Text('Watch live streams, or go live from your booth.',
-                        style: TextStyle(color: Colors.white70, fontSize: 12)),
+                    Text('Watch live streams, or go live from your booth.',
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 12)),
                   ],
                 ),
               ),
-              const Icon(LucideIcons.chevronRight, color: Colors.white70),
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
+                ),
+                child: const Icon(LucideIcons.chevronRight, color: AppTheme.goldBright, size: 18),
+              ),
             ],
           ),
         ),
@@ -241,76 +232,102 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final auth = ref.watch(authProvider);
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const MarketplaceScreen(),
-                ),
-              );
-            },
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Marketplace',
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    const Icon(LucideIcons.store,
-                        size: 16, color: AppTheme.primaryColor),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Browse by category',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const Icon(LucideIcons.chevronRight, size: 20),
-                  ],
-                ),
-              ],
+          Image.asset('assets/branding/ethio-build-connect-logo.png', height: 34, fit: BoxFit.contain),
+          const SizedBox(width: 10),
+          const Expanded(
+            child: Text(
+              'Ethio Build Connect',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3, color: AppTheme.textPrimary),
+              overflow: TextOverflow.ellipsis,
             ),
           ),
-          if (ref.watch(authProvider).isAuthenticated)
+          if (auth.isAuthenticated)
             GestureDetector(
               onTap: () => ref.read(rootTabIndexProvider.notifier).state = 5,
               child: Container(
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.borderColor, width: 2),
+                  border: Border.all(color: AppTheme.goldBright, width: 2),
                 ),
                 child: CircleAvatar(
-                  radius: 20,
-                  backgroundColor: AppTheme.primaryColor,
+                  radius: 19,
+                  backgroundColor: AppTheme.brandPanel,
                   child: Text(
-                    (ref.watch(authProvider).user?.firstName ?? 'U').isNotEmpty
-                        ? (ref.watch(authProvider).user!.firstName[0].toUpperCase())
-                        : 'U',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    (auth.user?.firstName ?? 'U').isNotEmpty ? auth.user!.firstName[0].toUpperCase() : 'U',
+                    style: const TextStyle(fontWeight: FontWeight.w800, color: Colors.white),
                   ),
                 ),
               ),
             )
           else
-            IconButton(
-              icon: const Icon(LucideIcons.userCircle, size: 32, color: AppTheme.primaryColor),
+            TextButton.icon(
               onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const AuthScreen()),
-                );
+                Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen()));
               },
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.primaryColorDark,
+                backgroundColor: AppTheme.violet50,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                shape: const StadiumBorder(),
+                textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
+              ),
+              icon: const Icon(LucideIcons.userCircle, size: 18),
+              label: const Text('Sign in'),
             ),
         ],
+      ),
+    );
+  }
+
+  /// Marketplace entry: one card that opens the organizations-by-category screen.
+  Widget _buildMarketplaceEntry(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        color: AppTheme.surfaceColor,
+        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+          onTap: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const MarketplaceScreen()));
+          },
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+              border: Border.all(color: AppTheme.borderColor),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: const BoxDecoration(color: AppTheme.violet50, shape: BoxShape.circle),
+                  child: const Icon(LucideIcons.store, color: AppTheme.primaryColorDark, size: 20),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Marketplace',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800)),
+                      const SizedBox(height: 2),
+                      const Text('Banks, contractors, suppliers and more by category',
+                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                const Icon(LucideIcons.chevronRight, color: AppTheme.textSecondary, size: 20),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -325,8 +342,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               height: 52,
               decoration: BoxDecoration(
                 color: AppTheme.surfaceColor,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(999),
                 border: Border.all(color: AppTheme.borderColor),
+                boxShadow: AppTheme.cardShadow,
               ),
               child: Row(
                 children: [
@@ -354,9 +372,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           Container(
             height: 52,
             width: 52,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppTheme.primaryColor,
-              borderRadius: BorderRadius.circular(16),
+              shape: BoxShape.circle,
             ),
             child: IconButton(
               icon: const Icon(LucideIcons.slidersHorizontal, color: Colors.white),
@@ -374,24 +392,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              color: AppTheme.textPrimary,
+          Expanded(
+            child: Text(
+              title,
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 22),
             ),
           ),
-          GestureDetector(
-            onTap: onSeeAll,
-            child: const Text(
-              'See All',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppTheme.primaryColor,
-              ),
+          TextButton(
+            onPressed: onSeeAll,
+            style: TextButton.styleFrom(
+              foregroundColor: AppTheme.primaryColorDark,
+              backgroundColor: AppTheme.violet50,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              shape: const StadiumBorder(),
+              textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
             ),
+            child: const Text('See all'),
           ),
         ],
       ),

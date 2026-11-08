@@ -7,6 +7,8 @@ import '../../../core/models/sponsored_organization_model.dart';
 import '../../../core/network/media_helper.dart';
 import '../../../core/providers/sponsorship_provider.dart';
 import '../../../core/theme/theme.dart';
+import '../../../core/widgets/brand.dart';
+import 'dart:ui' show ImageFilter;
 
 /// Hero carousel showing media (image/video) from Premium and Exclusive sponsors.
 /// Auto-advances every 5.5s and supports manual swipe.
@@ -81,9 +83,17 @@ class _SponsorCarouselWidgetState extends ConsumerState<SponsorCarouselWidget> {
         }
         // Preload carousel images so they appear faster when swiping
         _preloadSlideImages(context, slides);
-        return SizedBox(
-          height: widget.height,
-          child: Stack(
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Container(
+            height: widget.height,
+            clipBehavior: Clip.antiAlias,
+            decoration: BoxDecoration(
+              color: AppTheme.brandDeep,
+              borderRadius: BorderRadius.circular(AppTheme.radiusPanel),
+              boxShadow: AppTheme.panelShadow,
+            ),
+            child: Stack(
             children: [
               PageView.builder(
                 controller: _pageController,
@@ -98,67 +108,67 @@ class _SponsorCarouselWidgetState extends ConsumerState<SponsorCarouselWidget> {
                   );
                 },
               ),
-              // Gradient overlays for readability
-              Positioned(
-                left: 0,
-                right: 0,
-                top: 0,
-                height: 60,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Colors.black.withValues(alpha: 0.6), Colors.transparent],
-                    ),
-                  ),
-                ),
-              ),
+              // Readability scrim at the foot, violet rather than black so the band stays on brand
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                height: 100,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [Colors.black.withValues(alpha: 0.8), Colors.transparent],
-                    ),
-                  ),
-                ),
-              ),
-              // Page indicators
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 12,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(
-                    slides.length,
-                    (i) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      width: _currentIndex == i ? 20 : 8,
-                      height: 8,
-                      decoration: BoxDecoration(
-                        color: _currentIndex == i
-                            ? AppTheme.primaryColor
-                            : Colors.white.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(4),
+                height: 120,
+                child: IgnorePointer(
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [AppTheme.brandDeep.withValues(alpha: 0.85), Colors.transparent],
                       ),
                     ),
                   ),
                 ),
               ),
+              // Eyebrow pill, top left
+              const Positioned(
+                left: 14,
+                top: 14,
+                child: EyebrowPill('Featured partner', onDark: true),
+              ),
+              // Page indicators: gold active pill, like the web dots
+              if (slides.length > 1)
+                Positioned(
+                  right: 16,
+                  top: 18,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(
+                      slides.length,
+                      (i) => AnimatedContainer(
+                        duration: const Duration(milliseconds: 250),
+                        margin: const EdgeInsets.symmetric(horizontal: 2.5),
+                        width: _currentIndex == i ? 18 : 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: _currentIndex == i ? AppTheme.goldBright : Colors.white.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(3),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
             ],
+          ),
           ),
         );
       },
-      loading: () => SizedBox(
-        height: widget.height,
-        child: const Center(child: CircularProgressIndicator()),
+      loading: () => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Container(
+          height: widget.height,
+          decoration: BoxDecoration(
+            color: AppTheme.violet50,
+            borderRadius: BorderRadius.circular(AppTheme.radiusPanel),
+          ),
+          child: const Center(child: CircularProgressIndicator(color: AppTheme.primaryColor)),
+        ),
       ),
       error: (_, __) => const SizedBox.shrink(),
     );
@@ -185,90 +195,105 @@ class _SlidePageState extends State<_SlidePage> {
     return Stack(
       fit: StackFit.expand,
       children: [
-        // Media: fit full image within carousel (no crop); same origin as API
+        // Media: one download, drawn twice. The blurred, violet-tinted echo fills the sides
+        // that BoxFit.contain leaves empty, so the band reads as part of the violet app
+        // rather than a grey strip; the sharp image sits on top, uncropped.
         if (splashUrl != null && splashUrl.isNotEmpty)
-          Container(
-            color: const Color(0xFF27272A),
-            alignment: Alignment.center,
-            child: CachedNetworkImage(
-              imageUrl: splashUrl,
-              fit: BoxFit.contain,
-              memCacheWidth: 800,
-              memCacheHeight: 450,
-              maxWidthDiskCache: 800,
-              maxHeightDiskCache: 450,
-              fadeInDuration: const Duration(milliseconds: 200),
-              placeholder: (_, __) => _placeholder(),
-              errorWidget: (_, __, ___) => _placeholder(),
+          CachedNetworkImage(
+            imageUrl: splashUrl,
+            memCacheWidth: 800,
+            memCacheHeight: 450,
+            maxWidthDiskCache: 800,
+            maxHeightDiskCache: 450,
+            fadeInDuration: const Duration(milliseconds: 200),
+            placeholder: (_, __) => _placeholder(),
+            errorWidget: (_, __, ___) => _placeholder(),
+            imageBuilder: (context, provider) => Stack(
+              fit: StackFit.expand,
+              children: [
+                ImageFiltered(
+                  imageFilter: ImageFilter.blur(sigmaX: 24, sigmaY: 24),
+                  child: Image(image: provider, fit: BoxFit.cover),
+                ),
+                Container(color: AppTheme.brandDeep.withValues(alpha: 0.55)),
+                Image(image: provider, fit: BoxFit.contain),
+              ],
             ),
           )
         else
           _placeholder(),
-        // Content overlay
+        // Frosted sponsor card, bottom left (web: the lower-third card on the sponsor band)
         Positioned(
-          left: 16,
-          right: 16,
-          bottom: 40,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (logoUrlResolved != null && logoUrlResolved.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: logoUrlResolved,
-                    height: 48,
-                    width: 48,
-                    fit: BoxFit.contain,
-                    memCacheWidth: 96,
-                    memCacheHeight: 96,
-                    placeholder: (_, __) => _initialCircle(sponsor.name),
-                    errorWidget: (_, __, ___) => _initialCircle(sponsor.name),
-                  ),
-                )
-              else
-                _initialCircle(sponsor.name),
-              const SizedBox(height: 8),
-              Text(
-                sponsor.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              if (sponsor.address != null || sponsor.city != null) ...[
-                const SizedBox(height: 4),
-                Text(
-                  [sponsor.address, sponsor.city].where((e) => e != null && e.toString().trim().isNotEmpty).join(', '),
-                  style: TextStyle(
-                    color: Colors.white.withValues(alpha: 0.9),
-                    fontSize: 12,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 6),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          left: 12,
+          right: 12,
+          bottom: 12,
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+              child: Container(
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: _tierColor(sponsor.sponsorshipType).withValues(alpha: 0.9),
-                  borderRadius: BorderRadius.circular(6),
+                  color: AppTheme.brandDeep.withValues(alpha: 0.55),
+                  borderRadius: BorderRadius.circular(18),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.16)),
                 ),
-                child: Text(
-                  _tierLabel(sponsor.sponsorshipType),
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: logoUrlResolved != null && logoUrlResolved.isNotEmpty
+                          ? CachedNetworkImage(
+                              imageUrl: logoUrlResolved,
+                              fit: BoxFit.contain,
+                              memCacheWidth: 96,
+                              memCacheHeight: 96,
+                              placeholder: (_, __) => _initialCircle(sponsor.name),
+                              errorWidget: (_, __, ___) => _initialCircle(sponsor.name),
+                            )
+                          : _initialCircle(sponsor.name),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            sponsor.name,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          if (sponsor.address != null || sponsor.city != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              [sponsor.address, sponsor.city].where((e) => e != null && e.toString().trim().isNotEmpty).join(', '),
+                              style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 11.5),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    TierBadge(_tierLabel(sponsor.sponsorshipType), gold: _isGoldTier(sponsor.sponsorshipType)),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ],
@@ -277,39 +302,29 @@ class _SlidePageState extends State<_SlidePage> {
 
   Widget _placeholder() {
     return Container(
-      color: const Color(0xFF27272A),
+      color: AppTheme.brandDeep,
       child: const Center(
         child: Icon(LucideIcons.building2, size: 48, color: Colors.white24),
       ),
     );
   }
 
+  bool _isGoldTier(String? type) {
+    final t = (type ?? '').toUpperCase();
+    return t.contains('EXCLUSIVE') || t.contains('PLATINUM') || t.contains('PREMIUM');
+  }
+
   Widget _initialCircle(String name) {
-    return Container(
-      height: 48,
-      width: 48,
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      alignment: Alignment.center,
+    return Center(
       child: Text(
         name.isNotEmpty ? name.substring(0, 1).toUpperCase() : '?',
         style: const TextStyle(
-          color: Colors.white,
+          color: AppTheme.brandPanel,
           fontSize: 20,
-          fontWeight: FontWeight.bold,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
-  }
-
-  Color _tierColor(String? type) {
-    if (type == null) return AppTheme.primaryColor;
-    final t = type.toUpperCase();
-    if (t.contains('EXCLUSIVE')) return AppTheme.primaryColor;
-    if (t.contains('PLATINUM') || t.contains('PREMIUM')) return AppTheme.primaryColorDark;
-    return AppTheme.primaryColor;
   }
 
   String _tierLabel(String? type) {

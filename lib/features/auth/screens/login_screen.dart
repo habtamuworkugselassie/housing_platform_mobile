@@ -7,6 +7,7 @@ import '../../../core/widgets/custom_back_button.dart';
 import 'register_screen.dart';
 import 'otp_login_screen.dart';
 import '../../marketplace/screens/home_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
@@ -59,7 +60,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     });
 
     return Scaffold(
-      backgroundColor: AppTheme.surfaceColor,
+      backgroundColor: AppTheme.violet50,
       appBar: AppBar(
         leading: const CustomBackButton(),
         backgroundColor: Colors.transparent,
@@ -84,24 +85,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const SizedBox(height: 48),
+                const SizedBox(height: 24),
+                const Center(child: EyebrowPill('Welcome back')),
+                const SizedBox(height: 14),
                 Text(
-                  'Welcome Back',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: AppTheme.primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  'Sign in with your phone',
+                  style: Theme.of(context).textTheme.headlineMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to access your properties',
+                  'We will send a verification code to your number.',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     color: AppTheme.textSecondary,
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
                 
                 TextFormField(
                   controller: _phoneController,

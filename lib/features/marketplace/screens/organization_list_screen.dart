@@ -208,7 +208,7 @@ class _OrganizationTile extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: logoUrl != null && logoUrl.isNotEmpty
             ? ClipRRect(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(12),
                 child: Image.network(
                   logoUrl,
                   width: 56,
@@ -221,7 +221,8 @@ class _OrganizationTile extends StatelessWidget {
         title: Text(
           organization.name,
           style: const TextStyle(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
+            letterSpacing: -0.2,
             color: AppTheme.textPrimary,
           ),
         ),
@@ -250,9 +251,9 @@ class _OrganizationTile extends StatelessWidget {
                         (s) => Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: AppTheme.primaryColor.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: AppTheme.primaryColor.withOpacity(0.35)),
+                            color: AppTheme.violet50,
+                            borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: AppTheme.violet100),
                           ),
                           child: Text(
                             s.name,
@@ -281,8 +282,8 @@ class _OrganizationTile extends StatelessWidget {
       width: 56,
       height: 56,
       decoration: BoxDecoration(
-        color: AppTheme.primaryColor.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(8),
+        color: AppTheme.violet50,
+        borderRadius: BorderRadius.circular(12),
       ),
       alignment: Alignment.center,
       child: Text(

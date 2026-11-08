@@ -8,6 +8,7 @@ import '../../../core/theme/theme.dart';
 import '../../../core/widgets/custom_back_button.dart';
 import 'go_live_screen.dart';
 import 'live_viewer_screen.dart';
+import '../../../core/widgets/brand.dart';
 
 /// Public wall of currently-live streams, with a shortcut to start your own.
 class LiveBroadcastsScreen extends ConsumerStatefulWidget {
@@ -63,7 +64,6 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
       appBar: AppBar(
         leading: widget.showBackButton ? const CustomBackButton() : null,
         automaticallyImplyLeading: widget.showBackButton,
-        title: const Text('Live now'),
         backgroundColor: AppTheme.scaffoldBackgroundColor,
         elevation: 0,
         actions: [
@@ -75,12 +75,27 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _goLive,
-        backgroundColor: AppTheme.error,
-        foregroundColor: Colors.white,
+        backgroundColor: AppTheme.goldBright,
+        foregroundColor: AppTheme.brandDeep,
         icon: const Icon(LucideIcons.radio),
         label: const Text('Go live'),
       ),
-      body: SafeArea(child: _buildBody()),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Padding(
+              padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: SectionHeader(
+                eyebrow: 'Live from the expo',
+                title: 'Live now',
+                subtitle: 'Watch exhibitors and organizers broadcasting from the floor, or go live from your own booth.',
+              ),
+            ),
+            Expanded(child: _buildBody()),
+          ],
+        ),
+      ),
     );
   }
 
@@ -123,25 +138,21 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
 
   Widget _liveCard(LiveBroadcast b) {
     return InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(AppTheme.radiusCard),
       onTap: () => _watch(b),
       child: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.borderColor),
-        ),
+        decoration: AppTheme.cardDecoration,
         child: Row(
           children: [
             Container(
               width: 56,
               height: 56,
-              decoration: BoxDecoration(
-                color: AppTheme.surfaceMuted,
-                borderRadius: BorderRadius.circular(12),
+              decoration: const BoxDecoration(
+                color: AppTheme.brandDeep,
+                shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.playCircle, color: AppTheme.primaryColor),
+              child: const Icon(LucideIcons.play, color: AppTheme.goldBright),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -151,13 +162,20 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
                   Row(
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: AppTheme.error,
-                          borderRadius: BorderRadius.circular(4),
+                          color: const Color(0xFFFEE2E2),
+                          borderRadius: BorderRadius.circular(999),
                         ),
-                        child: const Text('LIVE',
-                            style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(LucideIcons.circle, size: 6, color: Color(0xFFDC2626)),
+                            SizedBox(width: 5),
+                            Text('LIVE',
+                                style: TextStyle(color: Color(0xFFB91C1C), fontSize: 10, fontWeight: FontWeight.w800, letterSpacing: 0.8)),
+                          ],
+                        ),
                       ),
                       if (b.broadcasterRole != null) ...[
                         const SizedBox(width: 8),
@@ -170,7 +188,7 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
                   Text(b.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
+                      style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w800, fontSize: 15)),
                   const SizedBox(height: 2),
                   Text(
                     [b.broadcasterName, if (b.companyName != null) b.companyName].join(' · '),
@@ -206,11 +224,16 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 56, color: AppTheme.textMuted),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: const BoxDecoration(color: AppTheme.violet50, shape: BoxShape.circle),
+              child: Icon(icon, size: 30, color: AppTheme.primaryColorDark),
+            ),
             const SizedBox(height: 16),
             Text(title,
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.w800, letterSpacing: -0.3)),
             const SizedBox(height: 8),
             Text(subtitle,
                 textAlign: TextAlign.center,
