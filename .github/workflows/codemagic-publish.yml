@@ -1,0 +1,52 @@
+name: Start Codemagic APK publish
+
+# GitHub starts the Codemagic "Android – APK → website" workflow directly through Codemagic's
+# API, so publishing no longer depends on a Codemagic webhook being installed on this repo.
+# Runs only for pushes to main that change something that ends up in the app.
+#
+# Needs two repository secrets (Settings → Secrets and variables → Actions):
+#   CODEMAGIC_API_TOKEN  Codemagic → Teams → Personal account/Team → Integrations → Codemagic API
+#   CODEMAGIC_APP_ID     the 24-character id in the Codemagic app URL: codemagic.io/app/<id>/...
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'android/**'
+      - 'assets/**'
+      - 'pubspec.yaml'
+      - 'pubspec.lock'
+  workflow_dispatch:
+
+concurrency:
+  group: codemagic-publish
+  cancel-in-progress: false
+
+jobs:
+  start:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start the Codemagic build
+        env:
+          CODEMAGIC_API_TOKEN: ${{ secrets.CODEMAGIC_API_TOKEN }}
+          CODEMAGIC_APP_ID: ${{ secrets.CODEMAGIC_APP_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$CODEMAGIC_API_TOKEN" ] || [ -z "$CODEMAGIC_APP_ID" ]; then
+            echo "::error::Set the CODEMAGIC_API_TOKEN and CODEMAGIC_APP_ID repository secrets (see the comment at the top of this workflow)."
+            exit 1
+          fi
+          body=$(printf '{"appId":"%s","workflowId":"android-apk-publish","branch":"main"}' "$CODEMAGIC_APP_ID")
+          code=$(curl -sS -o response.json -w '%{http_code}' \
+            -H "x-auth-token: $CODEMAGIC_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "$body" https://api.codemagic.io/builds)
+          cat response.json; echo
+          if [ "$code" != "200" ] && [ "$code" != "201" ]; then
+            echo "::error::Codemagic API returned HTTP $code"
+            exit 1
+          fi
+          build=$(sed -n 's/.*"buildId" *: *"\([^"]*\)".*/\1/p' response.json)
+          echo "Started Codemagic build ${build:-?} for commit ${GITHUB_SHA}"
+          echo "https://codemagic.io/app/$CODEMAGIC_APP_ID/build/${build:-}" >> "$GITHUB_STEP_SUMMARY"
