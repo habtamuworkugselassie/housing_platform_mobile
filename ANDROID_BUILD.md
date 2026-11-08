@@ -26,7 +26,9 @@ If the keystore is lost, users must uninstall before installing the next version
 
 ## Automatic release on push (Codemagic)
 
-The `android-apk-publish` workflow in `codemagic.yaml` runs on every push to `main`: it builds
+The `android-apk-publish` workflow in `codemagic.yaml` runs on pushes to `main` that touch app code
+(`lib/`, `android/`, `assets/`, `pubspec.yaml`, `pubspec.lock`; docs, iOS files and CI config
+alone do not trigger it): it builds
 the signed per-ABI APKs and commits them into the frontend repo's `public/downloads/`
 (updating the version chip on `download.html`), and the site's own deploy puts them live.
 It needs two things in Codemagic:

@@ -176,6 +176,18 @@ workflows:
           include: true
           source: true
       cancel_previous_builds: true
+    # Only when something that ends up in the app changed. Docs, CI config and the iOS folder
+    # do not produce a new APK, so they do not start a build or a site deploy.
+    when:
+      changeset:
+        includes:
+          - 'lib/**'
+          - 'android/**'
+          - 'assets/**'
+          - 'pubspec.yaml'
+          - 'pubspec.lock'
+        excludes:
+          - '**/*.md'
     environment:
       android_signing:
         - ethiobuildconnect_keystore
