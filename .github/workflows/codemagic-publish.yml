@@ -1,7 +1,8 @@
 name: Start Codemagic APK publish
 
-# GitHub starts the Codemagic "Android – APK → website" workflow directly through Codemagic's
-# API, so publishing no longer depends on a Codemagic webhook being installed on this repo.
+# Backup starter: GitHub can start the Codemagic "Android – APK → website" workflow through
+# Codemagic's API. The primary trigger is Codemagic's own webhook on this repo (app settings →
+# Webhooks); this job quietly does nothing unless the two secrets below are set.
 # Runs only for pushes to main that change something that ends up in the app.
 #
 # Needs two repository secrets (Settings → Secrets and variables → Actions):
@@ -34,8 +35,8 @@ jobs:
         run: |
           set -euo pipefail
           if [ -z "$CODEMAGIC_API_TOKEN" ] || [ -z "$CODEMAGIC_APP_ID" ]; then
-            echo "::error::Set the CODEMAGIC_API_TOKEN and CODEMAGIC_APP_ID repository secrets (see the comment at the top of this workflow)."
-            exit 1
+            echo "::notice::CODEMAGIC_API_TOKEN / CODEMAGIC_APP_ID secrets are not set; relying on Codemagic's own webhook trigger instead."
+            exit 0
           fi
           body=$(printf '{"appId":"%s","workflowId":"android-apk-publish","branch":"main"}' "$CODEMAGIC_APP_ID")
           code=$(curl -sS -o response.json -w '%{http_code}' \
