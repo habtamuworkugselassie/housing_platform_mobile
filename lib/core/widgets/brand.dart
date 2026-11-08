@@ -13,14 +13,19 @@ class EyebrowPill extends StatelessWidget {
   final String text;
   final bool onDark;
 
-  const EyebrowPill(this.text, {Key? key, this.onDark = false}) : super(key: key);
+  /// Opaque deep-violet fill for use over photos, where the translucent pill would wash out.
+  final bool solid;
+
+  const EyebrowPill(this.text, {Key? key, this.onDark = false, this.solid = false}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: onDark ? Colors.white.withValues(alpha: 0.12) : AppTheme.violet50,
+        color: solid
+            ? AppTheme.brandDeep.withValues(alpha: 0.78)
+            : (onDark ? Colors.white.withValues(alpha: 0.12) : AppTheme.violet50),
         borderRadius: BorderRadius.circular(999),
         border: Border.all(
           color: onDark ? Colors.white.withValues(alpha: 0.18) : AppTheme.violet100,
@@ -72,7 +77,7 @@ class SectionHeader extends StatelessWidget {
     final titleColor = onDark ? Colors.white : AppTheme.textPrimary;
     final bodyColor = onDark ? Colors.white.withValues(alpha: 0.78) : AppTheme.textSecondary;
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
           child: Column(
