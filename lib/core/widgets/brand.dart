@@ -365,3 +365,57 @@ class StatTile extends StatelessWidget {
     );
   }
 }
+
+/// The accent word of a headline with the site's hand-drawn gold swash beneath it
+/// (web: `.swash`, path "M6 16 C 60 6, 120 4, 180 10 S 270 20, 294 12" in a 300×24 box).
+class SwashText extends StatelessWidget {
+  final String text;
+  final TextStyle? style;
+  final Color color;
+
+  const SwashText(this.text, {Key? key, this.style, this.color = AppTheme.goldBright}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final fontSize = style?.fontSize ?? 24;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          bottom: -fontSize * 0.12,
+          height: fontSize * 0.32,
+          child: CustomPaint(painter: _SwashPainter(color: color, strokeWidth: fontSize * 0.11)),
+        ),
+        Text(text, style: style?.copyWith(color: color) ?? TextStyle(color: color)),
+      ],
+    );
+  }
+}
+
+class _SwashPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  const _SwashPainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final sx = size.width / 300, sy = size.height / 24;
+    final path = Path()
+      ..moveTo(6 * sx, 16 * sy)
+      ..cubicTo(60 * sx, 6 * sy, 120 * sx, 4 * sy, 180 * sx, 10 * sy)
+      ..cubicTo(240 * sx, 16 * sy, 270 * sx, 20 * sy, 294 * sx, 12 * sy);
+    canvas.drawPath(
+      path,
+      Paint()
+        ..color = color
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = strokeWidth
+        ..strokeCap = StrokeCap.round,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _SwashPainter old) => old.color != color || old.strokeWidth != strokeWidth;
+}

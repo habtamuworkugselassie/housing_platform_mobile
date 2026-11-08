@@ -22,22 +22,13 @@ class ExhibitionInfoSection extends ConsumerWidget {
           children: [
             const EyebrowPill('Ethio Build Connect Expo', onDark: true),
             const SizedBox(height: 14),
-            RichText(
-              text: TextSpan(
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
-                children: const [
-                  TextSpan(text: 'Ethiopia Real Estate Expo and Construction '),
-                  TextSpan(
-                    text: 'Exhibition',
-                    style: TextStyle(
-                      color: AppTheme.goldBright,
-                      decoration: TextDecoration.underline,
-                      decorationColor: AppTheme.goldBright,
-                      decorationThickness: 2,
-                    ),
-                  ),
-                ],
-              ),
+            Text(
+              'Ethiopia Real Estate Expo and Construction',
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: Colors.white),
+            ),
+            const SizedBox(height: 2),
+            IntrinsicWidth(
+              child: SwashText('Exhibition', style: Theme.of(context).textTheme.headlineMedium),
             ),
             const SizedBox(height: 14),
             Container(

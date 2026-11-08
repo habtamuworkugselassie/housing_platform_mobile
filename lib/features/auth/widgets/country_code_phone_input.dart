@@ -51,68 +51,68 @@ class CountryCodePhoneInput extends StatelessWidget {
   Widget build(BuildContext context) {
     final selected = findCountryCode(countryCode) ?? findCountryCode(defaultCountryCode)!;
     final borderColor = hasError ? AppTheme.error : AppTheme.borderColor;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Semantics(
-          button: true,
-          label: 'Country code ${selected.code}',
-          child: InkWell(
-            key: const Key('country-code-button'),
-            onTap: enabled ? () => _pick(context) : null,
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-            child: Container(
-              height: 52,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                border: Border.all(color: borderColor),
-                borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
-                color: enabled ? AppTheme.surfaceColor : AppTheme.surfaceMuted,
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(selected.flag, style: const TextStyle(fontSize: 18)),
-                  const SizedBox(width: 6),
-                  Text(selected.code, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w500)),
-                  const Icon(Icons.arrow_drop_down, color: AppTheme.textPrimary),
-                ],
+    final fill = enabled ? AppTheme.surfaceColor : AppTheme.surfaceMuted;
+    // One rounded field (web: the code picker sits inside the same box as the number),
+    // so the two controls never show as a square tab beside a rounded input.
+    return Container(
+      decoration: BoxDecoration(
+        color: fill,
+        borderRadius: BorderRadius.circular(AppTheme.radiusInput),
+        border: Border.all(color: borderColor),
+      ),
+      child: Row(
+        children: [
+          Semantics(
+            button: true,
+            label: 'Country code ${selected.code}',
+            child: InkWell(
+              key: const Key('country-code-button'),
+              onTap: enabled ? () => _pick(context) : null,
+              borderRadius: const BorderRadius.horizontal(left: Radius.circular(AppTheme.radiusInput)),
+              child: Container(
+                height: 52,
+                padding: const EdgeInsets.only(left: 14, right: 6),
+                decoration: const BoxDecoration(
+                  border: Border(right: BorderSide(color: AppTheme.borderColor)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(selected.flag, style: const TextStyle(fontSize: 18)),
+                    const SizedBox(width: 6),
+                    Text(selected.code, style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w600)),
+                    const Icon(Icons.arrow_drop_down, color: AppTheme.textSecondary),
+                  ],
+                ),
               ),
             ),
           ),
-        ),
-        Expanded(
-          child: TextFormField(
-            key: fieldKey,
-            controller: phoneController,
-            enabled: enabled,
-            onChanged: onChanged,
-            style: const TextStyle(color: AppTheme.textPrimary),
-            decoration: InputDecoration(
-              hintText: placeholder ?? 'Phone number',
-              hintStyle: const TextStyle(color: AppTheme.textSecondary),
-              fillColor: enabled ? AppTheme.surfaceColor : AppTheme.surfaceMuted,
-              filled: true,
-              border: OutlineInputBorder(
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-                borderSide: BorderSide(color: borderColor),
+          Expanded(
+            child: TextFormField(
+              key: fieldKey,
+              controller: phoneController,
+              enabled: enabled,
+              onChanged: onChanged,
+              style: const TextStyle(color: AppTheme.textPrimary),
+              decoration: InputDecoration(
+                hintText: placeholder ?? 'Phone number',
+                hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                filled: false,
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
               ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-                borderSide: BorderSide(color: borderColor),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
-                borderSide: BorderSide(color: hasError ? AppTheme.error : AppTheme.primaryColor, width: 1.5),
-              ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              keyboardType: TextInputType.phone,
+              autofillHints: const [AutofillHints.telephoneNumberNational],
+              validator: validator,
             ),
-            keyboardType: TextInputType.phone,
-            autofillHints: const [AutofillHints.telephoneNumberNational],
-            validator: validator,
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
