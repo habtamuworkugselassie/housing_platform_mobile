@@ -40,11 +40,10 @@ It needs two things in Codemagic:
 
 So a release is: bump `version:` in `pubspec.yaml`, merge to `main`, wait a few minutes.
 
-The build is started by GitHub Actions (`.github/workflows/codemagic-publish.yml`) through the
-Codemagic API rather than by a Codemagic webhook, so it also needs two GitHub repository
-secrets: `CODEMAGIC_API_TOKEN` (Codemagic → Teams → Integrations → Codemagic API) and
-`CODEMAGIC_APP_ID` (the id in the Codemagic app URL). The workflow can also be run by hand from
-the Actions tab.
+Builds are started by Codemagic's webhook on this repository (Codemagic app → settings →
+Webhooks). If "Recent deliveries" there stays empty after a push, add the payload URL shown on
+that page as a GitHub webhook (repo Settings → Webhooks, content type application/json, events
+Pushes and Pull requests).
 
 ## Prerequisites
 
