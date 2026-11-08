@@ -86,6 +86,16 @@ workflows:
     scripts:
       - name: Flutter packages
         script: flutter pub get
+      - name: Prepare signing from the Codemagic keystore
+        script: |
+          # android/app/build.gradle reads android/key.properties; Codemagic exposes the uploaded
+          # keystore as CM_KEYSTORE_PATH / CM_KEYSTORE_PASSWORD / CM_KEY_ALIAS / CM_KEY_PASSWORD.
+          cat > android/key.properties <<EOT
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOT
       - name: Build AAB
         script: |
           # Version and build number both come from pubspec.yaml (`version: 1.0.1+2`), the same
@@ -106,3 +116,44 @@ workflows:
         credentials: $GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
         track: internal
         submit_as_draft: false
+
+  # ───────────────────────── Android → signed APKs (no store) ─────────────────────────
+  # Builds the sideload APKs published on ethiobuildconnect.et/download.html. Needs only the
+  # keystore in Codemagic (no Google Play credentials), so it works before Play is set up.
+  android-apk:
+    name: Android – APK (sideload)
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      android_signing:
+        - ethiobuildconnect_keystore
+      vars:
+        API_BASE_URL: "https://ethiobuildconnect.et/api/v1"
+      flutter: stable
+    scripts:
+      - name: Flutter packages
+        script: flutter pub get
+      - name: Prepare signing from the Codemagic keystore
+        script: |
+          cat > android/key.properties <<EOT
+          storePassword=$CM_KEYSTORE_PASSWORD
+          keyPassword=$CM_KEY_PASSWORD
+          keyAlias=$CM_KEY_ALIAS
+          storeFile=$CM_KEYSTORE_PATH
+          EOT
+      - name: Build APKs (one per CPU architecture)
+        script: |
+          BUILD_NAME=$(sed -n 's/^version: *\([^+[:space:]]*\).*/\1/p' pubspec.yaml)
+          BUILD_NUMBER=$(sed -n 's/^version: *[^+]*+\([0-9]*\).*/\1/p' pubspec.yaml)
+          test -n "$BUILD_NAME" -a -n "$BUILD_NUMBER" || { echo "pubspec.yaml version must be <name>+<number>"; exit 1; }
+          echo "Building $BUILD_NAME ($BUILD_NUMBER)"
+          flutter build apk --release --split-per-abi \
+            --build-name="$BUILD_NAME" \
+            --build-number="$BUILD_NUMBER" \
+            --dart-define=API_BASE_URL="$API_BASE_URL"
+          # Names the site expects: 64-bit as the main download, 32-bit beside it.
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/ethio-build-connect.apk
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
+    artifacts:
+      - build/app/outputs/flutter-apk/ethio-build-connect.apk
+      - build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
