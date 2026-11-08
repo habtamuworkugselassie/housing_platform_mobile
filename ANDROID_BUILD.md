@@ -1,5 +1,29 @@
 # Android build & packaging
 
+## Release signing (read first)
+
+Release APKs from 1.1.0 onward are signed with the `ebc` key in the project's release
+keystore (`ebc-release.jks`, kept **outside** this repo). Android only installs an update over
+an installed app when both are signed with the same key, so every future release must use it:
+
+1. Put the keystore somewhere safe on the build machine (never commit it; `*.jks` and
+   `android/key.properties` are gitignored).
+2. Create `android/key.properties`:
+   ```
+   storePassword=<password>
+   keyPassword=<password>
+   keyAlias=ebc
+   storeFile=/absolute/path/to/ebc-release.jks
+   ```
+3. Bump `version:` in `pubspec.yaml`, then build:
+   ```bash
+   flutter build apk --release --split-per-abi --dart-define=API_BASE_URL=https://ethiobuildconnect.et/api/v1
+   ```
+   Publish `app-arm64-v8a-release.apk` as `public/downloads/ethio-build-connect.apk` and
+   `app-armeabi-v7a-release.apk` as `ethio-build-connect-32bit.apk` in the frontend repo.
+
+If the keystore is lost, users must uninstall before installing the next version.
+
 ## Prerequisites
 
 - Flutter SDK installed and on PATH
