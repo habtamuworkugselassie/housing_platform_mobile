@@ -81,11 +81,13 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
                   child: Center(
                     child: ConstrainedBox(
                       constraints: BoxConstraints(maxWidth: maxBannerWidth),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(AppTheme.radiusCard),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 20),
                         child: Image.asset(
-                          'assets/branding/ethio-build-connect-banner.png',
+                          'assets/branding/ethio-build-connect-wordmark.png',
+                          height: 64,
                           fit: BoxFit.contain,
+                          semanticLabel: 'Ethio Build Connect',
                         ),
                       ),
                     ),

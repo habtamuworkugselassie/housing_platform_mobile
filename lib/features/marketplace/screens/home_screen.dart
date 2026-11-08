@@ -237,15 +237,23 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 12),
       child: Row(
         children: [
-          Image.asset('assets/branding/ethio-build-connect-logo.png', height: 34, fit: BoxFit.contain),
-          const SizedBox(width: 10),
-          const Expanded(
-            child: Text(
-              'Ethio Build Connect',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800, letterSpacing: -0.3, color: AppTheme.textPrimary),
-              overflow: TextOverflow.ellipsis,
+          Container(
+            height: 44,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            decoration: BoxDecoration(
+              color: AppTheme.brandDeep,
+              borderRadius: BorderRadius.circular(999),
+              boxShadow: AppTheme.panelShadow,
+            ),
+            alignment: Alignment.center,
+            child: Image.asset(
+              'assets/branding/ethio-build-connect-wordmark.png',
+              height: 26,
+              fit: BoxFit.contain,
+              semanticLabel: 'Ethio Build Connect',
             ),
           ),
+          const Spacer(),
           if (auth.isAuthenticated)
             GestureDetector(
               onTap: () => ref.read(rootTabIndexProvider.notifier).state = 5,

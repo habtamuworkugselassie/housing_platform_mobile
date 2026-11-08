@@ -76,8 +76,9 @@ class ExhibitionInfoSection extends ConsumerWidget {
             Container(height: 1, color: Colors.white.withValues(alpha: 0.12)),
             const SizedBox(height: 16),
             const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(child: StatTile(value: '5 days', label: 'Launches, talks, deals')),
+                Expanded(child: StatTile(value: '5 days', label: 'Talks & deals')),
                 Expanded(child: StatTile(value: 'Addis', label: 'Convention Center')),
                 Expanded(child: StatTile(value: '300+', label: 'Exhibitors')),
               ],

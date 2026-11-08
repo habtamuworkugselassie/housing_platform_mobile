@@ -61,18 +61,13 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppTheme.scaffoldBackgroundColor,
-      appBar: AppBar(
-        leading: widget.showBackButton ? const CustomBackButton() : null,
-        automaticallyImplyLeading: widget.showBackButton,
-        backgroundColor: AppTheme.scaffoldBackgroundColor,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(LucideIcons.refreshCw),
-            onPressed: _loading ? null : _load,
-          ),
-        ],
-      ),
+      appBar: widget.showBackButton
+          ? AppBar(
+              leading: const CustomBackButton(),
+              backgroundColor: AppTheme.scaffoldBackgroundColor,
+              elevation: 0,
+            )
+          : null,
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _goLive,
         backgroundColor: AppTheme.goldBright,
@@ -84,12 +79,18 @@ class _LiveBroadcastsScreenState extends ConsumerState<LiveBroadcastsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Padding(
-              padding: EdgeInsets.fromLTRB(16, 0, 16, 12),
+            Padding(
+              padding: EdgeInsets.fromLTRB(16, widget.showBackButton ? 0 : 12, 16, 12),
               child: SectionHeader(
                 eyebrow: 'Live from the expo',
                 title: 'Live now',
                 subtitle: 'Watch exhibitors and organizers broadcasting from the floor, or go live from your own booth.',
+                action: IconButton.filledTonal(
+                  onPressed: _loading ? null : _load,
+                  icon: const Icon(LucideIcons.refreshCw, size: 18),
+                  style: IconButton.styleFrom(backgroundColor: AppTheme.violet50, foregroundColor: AppTheme.primaryColorDark),
+                  tooltip: 'Refresh',
+                ),
               ),
             ),
             Expanded(child: _buildBody()),
