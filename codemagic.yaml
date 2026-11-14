@@ -31,7 +31,7 @@ workflows:
         BUNDLE_ID: "com.ethiobuildconnect.housingplatformapp"
         APP_APPLE_ID: "0000000000"          # ← replace with your App Store Connect numeric app id
         API_BASE_URL: "https://ethiobuildconnect.et/api/v1"  # production API
-      flutter: stable
+      flutter: 3.47.9   # the version the APKs are built and tested with; "stable" moved to a Flutter that needs Gradle 9
       xcode: latest
       cocoapods: default
     scripts:
@@ -82,7 +82,7 @@ workflows:
         - google_play                  # ← group holding GCLOUD_SERVICE_ACCOUNT_CREDENTIALS
       vars:
         API_BASE_URL: "https://ethiobuildconnect.et/api/v1"  # production API
-      flutter: stable
+      flutter: 3.47.9   # the version the APKs are built and tested with; "stable" moved to a Flutter that needs Gradle 9
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -129,7 +129,7 @@ workflows:
         - ethiobuildconnect_keystore
       vars:
         API_BASE_URL: "https://ethiobuildconnect.et/api/v1"
-      flutter: stable
+      flutter: 3.47.9   # the version the APKs are built and tested with; "stable" moved to a Flutter that needs Gradle 9
     scripts:
       - name: Flutter packages
         script: flutter pub get
@@ -196,7 +196,7 @@ workflows:
       vars:
         API_BASE_URL: "https://ethiobuildconnect.et/api/v1"
         SITE_REPO: "habtamuworkugselassie/housing-platform-frontend"
-      flutter: stable
+      flutter: 3.47.9   # the version the APKs are built and tested with; "stable" moved to a Flutter that needs Gradle 9
     scripts:
       - name: Flutter packages
         script: flutter pub get
