@@ -3,8 +3,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:housing_platform_mobile/core/theme/theme.dart';
 import 'package:housing_platform_mobile/core/widgets/brand.dart';
 import 'package:housing_platform_mobile/core/widgets/custom_bottom_nav.dart';
+import 'package:housing_platform_mobile/core/update/app_update.dart';
 
 void main() {
+  _buildNumberTests();
   Widget wrap(Widget child) => MaterialApp(theme: AppTheme.lightTheme, home: Scaffold(body: child));
 
   testWidgets('brand primitives render their copy', (tester) async {
@@ -50,5 +52,16 @@ void main() {
     final style = tester.widget<ElevatedButton>(find.byType(ElevatedButton)).style ??
         Theme.of(tester.element(find.byType(ElevatedButton))).elevatedButtonTheme.style!;
     expect(style.shape?.resolve({}), isA<StadiumBorder>());
+  });
+}
+
+// Sideload builds carry Flutter's per-ABI versionCode offset; the update check compares
+// against the pubspec build number, so the offset has to be stripped.
+void _buildNumberTests() {
+  test('per-ABI versionCode maps back to the pubspec build number', () {
+    expect(AppUpdateChecker.flutterBuildNumber(2006), 6);
+    expect(AppUpdateChecker.flutterBuildNumber(1006), 6);
+    expect(AppUpdateChecker.flutterBuildNumber(6), 6);
+    expect(AppUpdateChecker.flutterBuildNumber(0), 0);
   });
 }
