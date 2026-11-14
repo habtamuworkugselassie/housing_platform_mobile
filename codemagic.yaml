@@ -235,6 +235,10 @@ workflows:
           cp build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk site/public/downloads/ethio-build-connect-32bit.apk
           # Keep the version chip on the download page in step with pubspec.yaml.
           sed -i "s|id=\"verChip\">v[^<]*<|id=\"verChip\">v${BUILD_NAME}<|" site/public/download.html
+          # Manifest the installed app polls for its in-app update prompt.
+          NOTES=$(git log -1 --pretty=%s | sed 's/"/\\"/g')
+          printf '{"version":"%s","build":%s,"url":"https://ethiobuildconnect.et/download.html","notes":"%s"}\n' \
+            "$BUILD_NAME" "$BUILD_NUMBER" "$NOTES" > site/public/downloads/version.json
           cd site
           git config user.name "Codemagic"
           git config user.email "codemagic@ethiobuildconnect.et"

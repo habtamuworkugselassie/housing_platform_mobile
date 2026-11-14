@@ -36,6 +36,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   flutter_secure_storage: ^9.2.4
   shared_preferences: ^2.3.5
+  package_info_plus: ^8.0.0
   pinput: ^6.0.2
   flutter_map: ^7.0.2
   latlong2: ^0.9.1
