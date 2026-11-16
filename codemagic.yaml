@@ -156,7 +156,8 @@ workflows:
           flutter build apk --release --split-per-abi \
             --build-name="$BUILD_NAME" \
             --build-number="$BUILD_NUMBER" \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=SIDELOAD_UPDATES=true
           # Names the site expects: 64-bit as the main download, 32-bit beside it.
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/ethio-build-connect.apk
           cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
@@ -227,7 +228,8 @@ workflows:
           flutter build apk --release --split-per-abi \
             --build-name="$BUILD_NAME" \
             --build-number="$BUILD_NUMBER" \
-            --dart-define=API_BASE_URL="$API_BASE_URL"
+            --dart-define=API_BASE_URL="$API_BASE_URL" \
+            --dart-define=SIDELOAD_UPDATES=true
           cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk build/app/outputs/flutter-apk/ethio-build-connect.apk
           cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk build/app/outputs/flutter-apk/ethio-build-connect-32bit.apk
       - name: Publish the APKs to the website repo
