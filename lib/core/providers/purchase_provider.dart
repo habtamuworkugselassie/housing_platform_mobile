@@ -20,7 +20,7 @@ class PurchaseFormState {
   final bool loadingPreview;
   final String? previewError;
 
-  /// True for visitors: an account step (Google / quick sign-up / WhatsApp code) comes first.
+  /// True for visitors: an account step (Google / quick sign-up / one-time code) comes first.
   final bool needsAccount;
   final WizardStep step;
 

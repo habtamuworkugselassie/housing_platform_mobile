@@ -35,7 +35,7 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
 
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verification code sent via WhatsApp!')),
+        const SnackBar(content: Text('Verification code sent by SMS and email.')),
       );
     } else if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -146,7 +146,7 @@ class _OtpLoginScreenState extends ConsumerState<OtpLoginScreen> {
               ),
               const SizedBox(height: 16),
               Text(
-                'We sent a 6-digit code via WhatsApp to\n${widget.phoneNumber}',
+                'We sent a 6-digit code by SMS to\n${widget.phoneNumber}\nand to the email on your account.',
                 style: const TextStyle(
                   fontSize: 16,
                   color: AppTheme.textSecondary,

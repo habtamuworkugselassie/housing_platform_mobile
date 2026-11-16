@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +24,13 @@ class AppUpdateInfo {
 }
 
 class AppUpdateChecker {
+  /// Set only by the sideload APK builds (`--dart-define=SIDELOAD_UPDATES=true` in
+  /// codemagic.yaml). Play and App Store builds must never point users at an outside
+  /// download: it breaks store policy, and an iOS user cannot install an APK anyway.
+  static const bool sideloadBuild = bool.fromEnvironment('SIDELOAD_UPDATES');
+
+  static bool get enabled => sideloadBuild && !kIsWeb && Platform.isAndroid;
+
   static const _snoozeKey = 'update_snoozed_build';
   static const _snoozeUntilKey = 'update_snoozed_until';
 
@@ -30,6 +39,7 @@ class AppUpdateChecker {
   /// Returns the published update when it is newer than the running build and not
   /// snoozed; null otherwise. Never throws: an offline launch simply skips the check.
   static Future<AppUpdateInfo?> check() async {
+    if (!enabled) return null;
     try {
       final info = await PackageInfo.fromPlatform();
       final installed = flutterBuildNumber(int.tryParse(info.buildNumber) ?? 0);

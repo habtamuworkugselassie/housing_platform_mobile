@@ -19,7 +19,7 @@ class AccountDetails {
 }
 
 /// Step 0 for visitors. Three doors, all ending in a signed-in BUYER: Google, a quick sign-up
-/// (name + phone), or a WhatsApp code for an existing phone.
+/// (name + phone), or a one-time code (SMS / email) for an existing phone.
 class PurchaseAccountStep extends ConsumerStatefulWidget {
   final ValueChanged<AccountDetails> onAuthenticated;
   const PurchaseAccountStep({super.key, required this.onAuthenticated});
@@ -147,7 +147,7 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
       ));
     } else {
       final err = ref.read(authProvider).error;
-      setState(() => _error = err ?? 'Enter the 6-digit code from WhatsApp.');
+      setState(() => _error = err ?? 'Enter the 6-digit code from the SMS or email.');
       ref.read(authProvider.notifier).clearError();
     }
   }
@@ -289,7 +289,7 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
           child: Text(
             _attempted && errors['phone'] != null
                 ? errors['phone']!
-                : (_normalizedPhone != null ? 'Will be stored as ${_normalizedPhone!}' : 'We will send a WhatsApp code to confirm this number. It is also how the seller reaches you.'),
+                : (_normalizedPhone != null ? 'Will be stored as ${_normalizedPhone!}' : 'We text sign-in codes to this number. It is also how the seller reaches you.'),
             style: TextStyle(fontSize: 12, color: _attempted && errors['phone'] != null ? AppTheme.error : AppTheme.textSecondary),
           ),
         ),
@@ -306,7 +306,7 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
         ExpansionTile(
           tilePadding: EdgeInsets.zero,
           title: const Text('Add a password (optional)', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textPrimary)),
-          subtitle: const Text('Without one you sign in with a WhatsApp code.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          subtitle: const Text('Without one you sign in with a code sent by SMS and email.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
           children: [
             TextField(
               key: const Key('account-password'),
@@ -349,7 +349,7 @@ class _PurchaseAccountStepState extends ConsumerState<PurchaseAccountStep> {
             ),
           ),
           const SizedBox(height: 6),
-          const Text('Sent to your WhatsApp. It expires after a few minutes.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
+          const Text('Sent by SMS and to the email on your account. It expires after 5 minutes.', style: TextStyle(fontSize: 12, color: AppTheme.textSecondary)),
           TextButton(
             onPressed: _busy ? null : () => setState(() {
                   _codeSent = false;

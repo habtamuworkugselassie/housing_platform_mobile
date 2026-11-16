@@ -12,6 +12,15 @@ class ApiClient {
   late final Dio _dio;
   final FlutterSecureStorage _storage;
 
+  /// Bumped when the session can no longer be refreshed (tokens were cleared).
+  /// AuthNotifier listens and drops to signed-out, so the UI stops looking logged in.
+  static final ValueNotifier<int> sessionExpired = ValueNotifier<int>(0);
+
+  /// The refresh in progress, shared by every request that hits 401 meanwhile. With
+  /// refresh-token rotation, two parallel refreshes would make the second one fail and
+  /// log the user out for no reason.
+  Future<bool>? _refreshInFlight;
+
   ApiClient({FlutterSecureStorage? storage})
       : _storage = storage ?? const FlutterSecureStorage() {
     
@@ -59,6 +68,7 @@ class ApiClient {
           } else {
             // Failed to refresh token, log out
             await _storage.deleteAll();
+            sessionExpired.value++;
             return handler.next(DioException(
               requestOptions: e.requestOptions,
               error: const UnauthorizedException('Session expired. Please log in again.'),
@@ -98,7 +108,11 @@ class ApiClient {
     return true;
   }
 
-  Future<bool> _refreshToken() async {
+  Future<bool> _refreshToken() {
+    return _refreshInFlight ??= _doRefreshToken().whenComplete(() => _refreshInFlight = null);
+  }
+
+  Future<bool> _doRefreshToken() async {
     try {
       final refreshToken = await _storage.read(key: 'refresh_token');
       if (refreshToken == null) return false;
@@ -131,9 +145,13 @@ class ApiClient {
       method: requestOptions.method,
       headers: requestOptions.headers,
     );
+    // A FormData body is a one-shot stream: Dio refuses to send the same instance twice.
+    final data = requestOptions.data is FormData
+        ? (requestOptions.data as FormData).clone()
+        : requestOptions.data;
     return _dio.request<dynamic>(
       requestOptions.path,
-      data: requestOptions.data,
+      data: data,
       queryParameters: requestOptions.queryParameters,
       options: options,
     );

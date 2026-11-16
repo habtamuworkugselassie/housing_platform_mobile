@@ -5,7 +5,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 
 import '../../../core/models/live_broadcast_model.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/theme.dart';
 import '../../../core/widgets/custom_back_button.dart';
 
 /// Watch a live broadcast (subscribe-only). Connects to LiveKit with a viewer

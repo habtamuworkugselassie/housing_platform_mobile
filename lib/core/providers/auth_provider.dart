@@ -77,7 +77,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
   final UserService _userService;
 
   AuthNotifier(this._authService, this._userService) : super(const AuthState()) {
+    ApiClient.sessionExpired.addListener(_onSessionExpired);
     _checkInitialAuth();
+  }
+
+  /// The API client could not refresh the session and already cleared the tokens.
+  void _onSessionExpired() {
+    if (mounted && state.isAuthenticated) {
+      state = const AuthState();
+    }
+  }
+
+  @override
+  void dispose() {
+    ApiClient.sessionExpired.removeListener(_onSessionExpired);
+    super.dispose();
   }
 
   Future<void> _checkInitialAuth() async {
