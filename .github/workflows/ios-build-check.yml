@@ -45,7 +45,7 @@ jobs:
           channel: stable
           # Keep in step with the version the Android release is built with (see
           # docs/STORE_SUBMISSION.md); AGP 8.11.1 / Kotlin 2.2.20 are this version's minimums.
-          flutter-version: "3.47.4"
+          flutter-version: "3.47.9"  # keep in step with codemagic.yaml
           cache: true
 
       # The runner image defaults to Xcode 16.4 (iOS 18 SDK). device_info_plus 12.4 (pulled in by

@@ -11,7 +11,7 @@ class SponsorshipService {
     final response = await _apiClient.get('/sponsorships/exclusive-organizations');
     final list = response.data;
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => SponsoredOrganizationModel.fromJson(
             e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
         .toList();
@@ -22,7 +22,7 @@ class SponsorshipService {
     final response = await _apiClient.get('/sponsorships/sponsored-organizations');
     final list = response.data;
     if (list is! List) return [];
-    return (list as List)
+    return list
         .map((e) => SponsoredOrganizationModel.fromJson(
             e is Map<String, dynamic> ? e : Map<String, dynamic>.from(e as Map)))
         .toList();

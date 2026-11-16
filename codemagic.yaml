@@ -39,6 +39,8 @@ workflows:
         script: xcode-project use-profiles
       - name: Flutter packages
         script: flutter pub get
+      - name: Unit tests
+        script: flutter test
       - name: Install CocoaPods
         script: find . -name "Podfile" -execdir pod install \;
       - name: Build IPA
@@ -86,6 +88,8 @@ workflows:
     scripts:
       - name: Flutter packages
         script: flutter pub get
+      - name: Unit tests
+        script: flutter test
       - name: Prepare signing from the Codemagic keystore
         script: |
           # android/app/build.gradle reads android/key.properties; Codemagic exposes the uploaded
@@ -133,6 +137,8 @@ workflows:
     scripts:
       - name: Flutter packages
         script: flutter pub get
+      - name: Unit tests
+        script: flutter test
       - name: Prepare signing from the Codemagic keystore
         script: |
           cat > android/key.properties <<EOT
@@ -200,6 +206,8 @@ workflows:
     scripts:
       - name: Flutter packages
         script: flutter pub get
+      - name: Unit tests
+        script: flutter test
       - name: Prepare signing from the Codemagic keystore
         script: |
           cat > android/key.properties <<EOT
